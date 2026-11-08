@@ -6,7 +6,7 @@ class_name PitStopAndRivalLogic
 const EquipmentSchemasScript = preload("res://src/core/schemas/equipment_schemas.gd")
 const DeterministicRNGScript = preload("res://src/core/deterministic_rng_service.gd")
 
-constSTRICT_HEAL_AMOUNT: int = 1
+const STRICT_HEAL_AMOUNT: int = 1
 const BLIND_BOX_COST: int = 60
 const REROLL_COSTS: Array[int] = [25, 50, 90]
 
@@ -62,7 +62,7 @@ func open_mystery_contraband_box(stratum_idx: int, node_idx: int, box_idx: int =
 
 ## Applies Bucky's Strict +1 Red Heart Emergency Heal (never exceeds +1 HP per interaction!).
 func apply_strict_pit_stop_heal(current_hp: int, max_hp: int) -> int:
-	return mini(max_hp, current_hp + constSTRICT_HEAL_AMOUNT)
+	return mini(max_hp, current_hp + STRICT_HEAL_AMOUNT)
 
 
 ## Rolls 3 Rarity-Weighted Upgrade Cards across Bucky's 4 Tuning Axes (preserving locked 0.42s dodge duration!).
