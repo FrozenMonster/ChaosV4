@@ -12,11 +12,11 @@ holding its placeholder is incomplete; a later run fills only those.
 ## 1. Visual Identity Statement
 
 ### Direction Name (视觉方向名称)
-**Chibi-Tactical Neon Foundry Pixel (潮玩大头战术 × 暗色工业霓虹像素 / *Enter the Gungeon* × *SYNTHETIK* Hybrid)**
+**Chibi-Tactical Neon Dungeon Pixel (潮玩大头地牢 × 高对比霓虹弹幕像素 — 融合《挺进地牢》《元气骑士》《霓虹深渊》《比特小队》《Nuclear Throne》《Tiny Rogues》视觉所长)**
 
 ### One-Line Visual Rule (一句话视觉铁律)
-> **“暗灰低饱和的极简工业底板，衬托黑粗描边的夸张二头身角色与大枪；高亮暖色实心敌方弹幕永远置顶，一切我方冷色超载特效必须半透明让路。”**  
-> *(“Dark, desaturated industrial slate floors frame chunky black-outlined 2-head chibi gunners and oversized firearms; maximum-luminance warm enemy projectiles always render on top, while cool-toned player Overcharge VFX remain translucent and subordinate.”)*
+> **“暗色干净的工业地牢底板，衬托《挺进地牢/元气骑士》式黑粗描边的二头身角色与夸张大枪；高亮暖色白芯敌方弹幕永远置顶，一切我方冷色超载特效必须半透明让路。”**  
+> *(“Clean, dark industrial-dungeon floors frame *Enter the Gungeon / Soul Knight*-style chunky black-outlined 2-head chibi gunners and oversized firearms; maximum-luminance warm enemy projectiles always render on top, while cool-toned player Overcharge VFX remain translucent and subordinate.”)*
 
 ### Supporting Visual Principles (三大核心视觉原则)
 
@@ -280,9 +280,13 @@ Per `project.yaml`, all asset filenames, directories, and scene files enforce **
 
 ## 9. Reference Direction
 
-| Reference Title (参考作品) | What We Take (精准汲取的视觉元素) | What We Avoid / Diverge From (明确规避与差异化边界) |
+### 同源 2D 像素动作肉鸽参考矩阵 (Curated Pixel-Art Action Roguelite Reference Matrix)
+我们聚焦于画风高度同源、经过海量玩家验证的 **6 款标杆级 2D 俯视角像素射击/动作肉鸽游戏**，综合各家之所长，同时明确规避各自的视觉痛点：
+
+| Reference Title (参考作品) | What We Take (精准汲取的视觉与动效优点) | What We Avoid / Diverge From (明确规避的痛点与差异化边界) |
 | :--- | :--- | :--- |
-| **1. *Enter the Gungeon*** | **Chibi Proportions, Gun Framing & Interactive Props**: `2-head` character silhouettes with crisp `1px–2px` black outlines; detached oversized guns that remain 100% readable; tactile table-flip (`[E]`) animations; persistent floor shell casings and debris. | **Avoid High-Noise Warm Brick Floors & Opaque Player Clutter**: Reject bright tan/brown dungeon cobbles that reduce warm bullet contrast; reject late-game opaque player explosions that hide enemy bullets (enforcing **Player VFX Alpha $\le 45\%$**). |
-| **2. *SYNTHETIK: Legion Rising*** | **Dark Slate Floors, Tactical HUD & Reload Telemetry**: Desaturated, low-value (`<= 30%`) industrial metal floor plating with subtle grid seams; crisp crosshair-proximate Active Reload timing bars; punchy mechanical recoil, shell-ejection flashes, and high-voltage laser/tracer contrast. | **Avoid Realistic Top-Down Military Proportions & Drab Enemies**: Reject small-headed realistic soldier proportions and muted olive/gray enemy camouflage—our enemies use bold geometric silhouettes and high-chroma warm threats. |
-| **3. *Nuclear Throne* / *Tiny Rogues*** | **Instant Impact Juice & Archetype Readability**: Unmistakable `0.06s–0.08s` pure-white enemy hit-flashes, snappy procedural squash-and-stretch on firing/dodging, and ultra-clean 1-silhouette-per-enemy archetype recognition at thumbnail scale. | **Avoid Ultra-Low-Res Lo-Fi Crunch & Chaotic Palette Clash**: Reject `8×8px` micro-sprites or unoutlined noisy backgrounds where floor debris and active projectiles share the same luminance tier. |
-| **4. *Hades*** | **Diegetic Previewed Door Signage & High-Chroma Boons**: Crystal-clear forward door reward crests readable from across the room; distinct color-coded energy signatures for different build triggers; inviting, warm-lit Pit-Stop respites between combat rooms. | **Avoid Isometric 3D Painted Proportions & Full-Screen Ult Vignettes**: Maintain strict top-down orthographic pixel clarity for true bullet-hell hitbox precision; never trigger opaque full-screen overlays during combat. |
+| **1. 《挺进地牢》<br>(*Enter the Gungeon*)** | **角色/枪械比例与物理交互天花板**：<br>• `2头身` Q版大头小人 + `1px–2px` 纯黑外描边；<br>• **分离式夸张大枪挂点**（缩略图尺寸下也能一眼认出是左轮、冲锋枪还是重炮）；<br>• 掀翻木桌当掩体（`[E]`）的多阶段破损动画；<br>• 满地永久留存的黄铜弹壳、焦黑弹坑与亮白内芯的圆润敌方子弹。 | **规避暖黄碎石地板噪点与后期全屏遮挡**：<br>• 拒绝高明度的暖黄/棕红地砖（会吃掉暖色子弹对比度），地板明度严控 $\le 30\%$；<br>• 拒绝后期不透明的夸张玩梗爆炸挡住敌方子弹（严格执行**我方地面/爆炸特效 Alpha $\le 45\%$** 铁律）。 |
+| **2. 《元气骑士》<br>(*Soul Knight*)** | **干净讨喜的像素块面、武器脑洞辨识度与极简状态栏**：<br>• 干净利落、绝不脏乱的像素块面着色（高亲和力、一眼看清主次结构）；<br>• 轻型/中型/终极重火器极具反差感的造型剪影与蓄力光效；<br>• 左上角“生命 + 护甲 + 能量槽”直白清爽的街机可读性。 | **规避纯自动锁敌的弱准星感与召唤物堆叠**：<br>• 我们强调双摇杆精准手瞄与主动换弹，因此强化准星周围 `64px` 微距 HUD（头顶换弹滑块、尾弹提示）；<br>• 严禁满屏召唤物/跟班宠物遮挡走位视线。 |
+| **3. 《霓虹深渊》&《比特小队》<br>(*Neon Abyss* & *Juicy Realm*)** | **深暗底板上的果冻级霓虹色彩与三门明牌灯箱**：<br>• 在暗色工业地牢底板上，用高饱和的**电光青（超载/擦弹）**、**琥珀金（尾弹/完美换弹）**、**霓虹紫（黑洞/事件门）**打造强烈的视觉多巴胺；<br>• 极具张力的果冻感道具图标与房间门头霓虹灯牌（一眼分清【枪械门】【道具门】【随机事件门】）。 | **规避全屏高饱和彩光污染**：<br>• 霓虹高光严格限定在“子弹核心、换弹冲击波边缘、门头灯牌”三个焦点上，背景墙面与地板绝不滥用刺眼霓虹色。 |
+| **4. 《废土之王》<br>(*Nuclear Throne*)** | **教科书级的帧级打击感（Game Feel & Juice）**：<br>• 命中敌人的瞬间触发 `0.06s–0.08s` **纯白剪影闪白（Hit-Flash）** + 击退微震；<br>• 右键重火器开火与炸药桶引爆时的**瞬间顿帧（Hitstop `0.04s`）**与方向性相机反冲；<br>• 角色翻滚与开枪时富有弹性的挤压拉伸（Squash & Stretch）。 | **规避早期 8-bit 粗糙噪点画质**：<br>• 不采用无描边的粗糙低分辨率色块，保持《挺进地牢》/《元气骑士》级别的清晰黑边与精致像素细节。 |
+| **5. 《小小肉鸽》&《传说法师》<br>(*Tiny Rogues* & *Wizard of Legend*)** | **高辨识度蓄力红闪预警与冲刺残影**：<br>• 敌人在释放高危弹幕前，周身浮现极其醒目的**红色收缩十字框与蓄力闪光**（完美服务于我们的“弱点打断 `+35⚡`”机制）；<br>• 翻滚冲刺（`Space`）时干净利落的半透明青色像素残影拖尾，清晰标示擦弹轨迹；<br>• 进门前一目了然的奖励图标与“超载押注（`[F]` 双倍风险/双倍收益）”门框锁死动效。 | **规避复杂繁琐的地面法阵纹理**：<br>• 预警圈与擦弹环全部使用极简高对比几何圆弧，绝不绘制复杂花哨的哥特/魔法花纹干扰视线。 |
