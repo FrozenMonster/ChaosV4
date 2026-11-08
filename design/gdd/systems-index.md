@@ -37,7 +37,7 @@ To support this loop without spaghetti coupling or frame spikes during 500-bulle
 | 5 | 7-Slot Loadout & Tactical Items System | Gameplay | MVP | Approved | design/gdd/loadout-and-items-system.md | Combat Event Bus & Data Schema (inferred), Dual-Gun, Active Reload & Overcharge Engine |
 | 6 | Enemy AI, Elite/Boss Interrupts & Boss System | Gameplay | MVP | Approved | design/gdd/enemy-and-boss-system.md | Combat Event Bus & Data Schema (inferred), Pooled Bullet-Hell & Damage System, Dual-Gun, Active Reload & Overcharge Engine |
 | 7 | 3-Door Routing, Overdrive Bet & Floor Generator | Progression | MVP | Approved | design/gdd/door-routing-and-floor-gen.md | Dual-Gun, Active Reload & Overcharge Engine, 7-Slot Loadout & Tactical Items System, Enemy AI, Elite/Boss Interrupts & Boss System |
-| 8 | Pit-Stop, Bounty Chip Economy & Rival Cast System | Economy | Vertical Slice | Not Started | design/gdd/pit-stop-and-rival-system.md | 7-Slot Loadout & Tactical Items System, Enemy AI, Elite/Boss Interrupts & Boss System, 3-Door Routing, Overdrive Bet & Floor Generator |
+| 8 | Pit-Stop, Bounty Chip Economy & Rival Cast System | Economy | Vertical Slice | Approved | design/gdd/pit-stop-and-rival-system.md | 7-Slot Loadout & Tactical Items System, Enemy AI, Elite/Boss Interrupts & Boss System, 3-Door Routing, Overdrive Bet & Floor Generator |
 | 9 | Tactical Micro-HUD & Screen UI System (inferred) | UI | MVP | Approved | design/gdd/tactical-micro-hud.md | Player 3C, Dodge-Graze & Tactical Arena Interactables, Dual-Gun, Active Reload & Overcharge Engine, 7-Slot Loadout & Tactical Items System, 3-Door Routing, Overdrive Bet & Floor Generator |
 | 10 | Combat Audio & Procedural Juice System (inferred) | Audio | Vertical Slice | Not Started | design/gdd/combat-audio-juice-system.md | Combat Event Bus & Data Schema (inferred), Pooled Bullet-Hell & Damage System, Dual-Gun, Active Reload & Overcharge Engine |
 | 11 | Save/Load, Ship Hub & Meta-Progression (inferred) | Persistence | Alpha | Not Started | design/gdd/meta-progression-and-save.md | 7-Slot Loadout & Tactical Items System, 3-Door Routing, Overdrive Bet & Floor Generator, Pit-Stop, Scrap Economy & Rival Cast System |
@@ -138,11 +138,11 @@ To support this loop without spaghetti coupling or frame spikes during 500-bulle
 | Metric | Count |
 |--------|-------|
 | Total systems identified | 11 |
-| Design docs started | 8 |
-| Design docs reviewed | 8 |
-| Design docs approved | 8 |
+| Design docs started | 9 |
+| Design docs reviewed | 9 |
+| Design docs approved | 9 |
 | MVP systems designed | 8/8 |
-| Vertical Slice systems designed | 0/2 |
+| Vertical Slice systems designed | 1/2 |
 
 ---
 

@@ -63,13 +63,13 @@ This system defines two contracts:
 4. **Anti-Infinite-Loop & Recursion Depth Guard**:
    - Any secondary effect spawned by a Passive Relic or Dynamo Core carries a `recursion_depth: int` tag (`0` for direct player action, `+1` for each triggered proc).
    - **Hard Rule**: Events with `recursion_depth >= 2` **cannot** trigger further Passive Relic procs or Tier-2 Dynamo Core bursts, preventing infinite loops (e.g., *Relic A zaps on reload -> zap kills enemy -> kill triggers Relic B reload -> infinite hang*).
-5. **Canonical 7-Slot & World Data Schemas (`Resource` Contracts)**:
-   - Every gameplay item and entity must load its tuning values from a typed `.tres` resource file:
-     - `PrimaryWeaponData`: `id`, `display_name_zh`, `mag_size`, `fire_interval`, `base_damage`, `bullet_speed`, `reload_time`, `sweet_spot_start`, `sweet_spot_end`, `final_round_type`, `final_round_multiplier`, `sprite_path`.
-     - `HeavyWeaponData`: `id`, `display_name_zh`, `overcharge_cost` (`30.0`, `50.0`, or `90.0`), `behavior_type` (`swarm`, `rail`, `black_hole`), `base_damage`, `duration`, `cooldown`.
-     - `DynamoCoreData`: `id`, `display_name_zh`, `trigger_signal_name`, `difficulty_tier` (`easy`, `medium`, `hard`), `overcharge_bonus` (`12.0`–`40.0`), `condition_threshold`, `internal_cooldown`.
-     - `ActiveItemData`: `id`, `display_name_zh`, `cooldown_seconds`, `effect_radius`, `effect_type`.
-     - `PassiveRelicData`: `id`, `display_name_zh`, `hook_signal_name`, `stat_modifiers: Dictionary`, `proc_effect_id`, `salvage_chip_value` (default `20` Bounty Chips).
+5. **Canonical 7-Slot & World Data Schemas (`Resource` Contracts with `RarityTier`)**:
+   - Every weapon, Dynamo Core, Active/Passive item, and Forge upgrade carries a standardized `rarity_tier: StringName` (`COMMON`, `RARE`, `EPIC`, `LEGENDARY`) that governs its drop weight, visual beam color (`#D1D5DB` White, `#00F0FF` Cyan, `#A855F7` Violet, `#FFB800` Amber Gold), power budget (`1.0x / 1.35x / 1.75x / 2.2x+`), shop price (`55 / 85 / 130 / 190 🪙`), and salvage payout (`15 / 25 / 40 / 65 🪙`):
+     - `PrimaryWeaponData`: `id`, `display_name_zh`, `rarity_tier`, `mag_size`, `fire_interval`, `base_damage`, `bullet_speed`, `reload_time`, `sweet_spot_start`, `sweet_spot_end`, `final_round_type`, `final_round_multiplier`, `signature_buff_id`, `sprite_path`.
+     - `HeavyWeaponData`: `id`, `display_name_zh`, `rarity_tier`, `overcharge_cost` (`45.0`, `65.0`, or `90.0`), `behavior_type` (`swarm`, `rail`, `black_hole`), `base_damage`, `duration`, `cooldown`.
+     - `DynamoCoreData`: `id`, `display_name_zh`, `rarity_tier`, `trigger_signal_name`, `difficulty_tier` (`easy`, `medium`, `hard`), `overcharge_bonus` (`6.0`–`22.0`), `condition_threshold`, `internal_cooldown`.
+     - `ActiveItemData`: `id`, `display_name_zh`, `rarity_tier`, `cooldown_seconds`, `effect_radius`, `effect_type`.
+     - `PassiveRelicData`: `id`, `display_name_zh`, `rarity_tier`, `exclusivity_group`, `trigger_hook`, `condition_filter`, `atomic_actions: Array[Dictionary]`, `stat_modifiers: Dictionary`, `salvage_chip_value` (`15 / 25 / 40 / 65` Bounty Chips by rarity).
      - `ArenaInteractableData`: `id`, `display_name_zh`, `trigger_mode` (`PROXIMITY_KEY_E` or `RANGED_HIT`), `effect_type` (`DEPLOY_SHIELD_COVER`, `OVERCHARGE_CAPACITOR`, `KINETIC_LAUNCHPAD`, `EXPLOSIVE_BLAST`, `CRYO_SLOW_FIELD`, `PRISM_BULLET_SPLIT`), `effect_params: Dictionary`, `durability_hp`, `cooldown_seconds`.
 
 ### States and Transitions
