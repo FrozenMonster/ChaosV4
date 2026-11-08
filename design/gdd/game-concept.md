@@ -28,7 +28,7 @@
 
 ## Core Fantasy
 
-You are a hyper-agile gun-alchemist dancing on the razor's edge of a mechanical bullet hell. Instead of hiding behind wallsplink-shooting with a weak starter pistol to hoard ammo, every bold action you take—rolling through a curtain of enemy fire, snapping a frame-perfect reload, kicking an explosive barrel into an elite's charging weak spot—fuels an overflowing reactor of heavy firepower. The bolder and sharper your play, the more explosive your arsenal becomes.
+You are a wise-cracking **Space "Gunboy" (intergalactic cowboy & bounty hunter)** who took the ultimate "100-Million Star-Cred" bounty on lawless **Planet X**: dive to the bottom of an ever-shifting subterranean cavern to retrieve the mysterious **Sample Y**—only to read the microscopic fine print after landing (*99,999,950 Creds pre-deducted for drop-pod fuel, oxygen tax, and respawn fees*). Refusing to work for free, you dance on the razor's edge of a mechanical bullet hell, turning every bold dodge-roll graze, timed Active Reload, and weak-point interrupt into raw Overcharge firepower. As you descend from the 3-floor surface bait-trap into a 10-stratum corporate conspiracy (and an Endless Overdrive Loop beyond), you cross paths with eccentric rival hunters and survivors—some becoming skewer-grilling Black-Market Merchants, some ambushing you as Hidden Bosses, and others joining your ship crew as newly unlockable Playable Gunboys.
 
 ---
 
@@ -116,8 +116,8 @@ It combines *Enter the Gungeon*'s tight dodge-roll and table-flipping bullet-hel
 3. **Pre-Door "Overdrive Bet" (Risk/Reward Wager)**: Before opening an Armory or Item Combat Door, the player may inject surplus Overcharge energy into the door lock to activate an **Overdrive Bet** (e.g., *+1 Elite Reinforcer*, *Faster Enemy Projectiles*, or *35s Blitz Timer*). Winning the bet upgrades the room's drop rarity or adds bonus Scrap Shells.
 4. **Floor Boss Showdown**: Every 6–8 rooms culminates in a multi-phase bullet-hell Boss. Defeating the Boss hitless awards a **Master Chamber Core** (permanent Max HP + Overcharge capacity up for the run).
 
-### Session-Level (30-45 minutes)
-A full run spans 3–4 distinct mechanical biomes (approx. 10 minutes each) leading to the Core Reactor Boss. Runs are brisk, zero-filler, and end with a run summary screen detailing damage breakdown by trigger source, Overcharge generated, and new Armory blueprints unlocked.
+### Session-Level (30-45 minutes — 3-Floor Bait Contract, 10-Stratum Conspiracy & Endless Loop)
+A standard run spans 3 distinct subterranean strata on Planet X (approx. 10 minutes each) culminating in the Decoy Vault Boss, while the full expandable world architecture scales seamlessly across **10 Strata** down to the true **Sample Y** heart—plus an **Endless Overdrive Loop (Floor 11 $\rightarrow \infty$)** where players pump Overcharge into Sample Y like a cosmic slot machine to farm the corrupt megacorp into bankruptcy. Along the way, recurring fellow bounty hunters dynamically act as Pit-Stop NPCs, Black-Market Merchants, Hidden Bosses, and unlockable Playable Gunboys (see `design/narrative/world-lore.md`).
 
 ### Long-Term Progression
 Players spend meta-currency (**Overdrive Sparks**) in the Hub Foundry to:
