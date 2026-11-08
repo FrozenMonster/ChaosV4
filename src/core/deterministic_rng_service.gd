@@ -45,13 +45,21 @@ func get_coordinate_rng(channel_tag: String, stratum_idx: int, node_idx: int, ac
 	return rng
 
 
-## Rolls 4-Tier Rarity ("COMMON", "RARE", "EPIC", "LEGENDARY") using GDD #9 weights + Pity Accumulator.
-func roll_rarity(stratum_idx: int, has_overdrive_bet: bool, node_idx: int, roll_idx: int = 0) -> String:
+## Computes equipment drop probability using the multiplicative formula:
+## final_drop_chance = BASE_EQUIP_DROP_CHANCE (0.35) * (1.0 + boost_pct)
+static func compute_equipment_drop_chance(overcharge_ratio: float, bet_stacks: int = 0) -> float:
+	var x_pct: float = clampf(overcharge_ratio, 0.0, 1.0) * 0.50 + float(clampi(bet_stacks, 0, 3)) * 0.20
+	return clampf(0.35 * (1.0 + x_pct), 0.0, 0.95)
+
+
+## Rolls 4-Tier Rarity ("COMMON", "RARE", "EPIC", "LEGENDARY") using Base_Weight * (1.0 + X%) multiplicative scaling.
+func roll_rarity(stratum_idx: int, has_overdrive_bet: bool, node_idx: int, roll_idx: int = 0, overcharge_ratio: float = 0.0) -> String:
 	var coord_rng := get_coordinate_rng("LOOT", stratum_idx, node_idx, roll_idx)
-	var w_common: float = maxf(0.0, 58.0 - 4.5 * float(stratum_idx - 1)) * (0.0 if has_overdrive_bet else 1.0)
-	var w_rare: float = 28.0 + 1.5 * float(stratum_idx - 1) + (27.0 if has_overdrive_bet else 0.0)
-	var w_epic: float = (11.0 + 2.0 * float(stratum_idx - 1)) * (3.0 if has_overdrive_bet else 1.0) + epic_pity_bonus * 100.0
-	var w_leg: float = (3.0 + 1.2 * float(stratum_idx - 1)) * (4.0 if has_overdrive_bet else 1.0) + epic_pity_bonus * 35.0
+	var x_pct: float = clampf(overcharge_ratio, 0.0, 1.0) * 0.80 + (0.40 if has_overdrive_bet else 0.0) + float(maxi(0, stratum_idx - 1)) * 0.10 + epic_pity_bonus
+	var w_common: float = 60.0
+	var w_rare: float = 26.0 * (1.0 + 0.50 * x_pct)
+	var w_epic: float = 11.0 * (1.0 + 1.20 * x_pct)
+	var w_leg: float = 3.0 * (1.0 + 2.00 * x_pct)
 
 	var total: float = w_common + w_rare + w_epic + w_leg
 	var pick: float = coord_rng.randf() * total
@@ -68,5 +76,5 @@ func roll_rarity(stratum_idx: int, has_overdrive_bet: bool, node_idx: int, roll_
 	if chosen == "EPIC" or chosen == "LEGENDARY":
 		epic_pity_bonus = 0.0
 	else:
-		epic_pity_bonus += 0.15 if has_overdrive_bet else 0.08
+		epic_pity_bonus += 0.12 if has_overdrive_bet else 0.06
 	return chosen

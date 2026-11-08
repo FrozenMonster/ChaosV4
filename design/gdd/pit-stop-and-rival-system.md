@@ -100,17 +100,21 @@ Governs the **4-Tier Global Rarity System (`COMMON / RARE / EPIC / LEGENDARY`)**
 
 *(Note: `economy-designer` and `systems-designer` consulted for dynamic rarity weighting and shop/forge pricing math.)*
 
-### 1. Dynamic Rarity Weight Calculation (`effective_rarity_weight`)
+### 1. Dynamic Rarity Weight & Equipment Drop Chance (`Base * (1 + X%)`)
 
-When rolling any item drop or Forge upgrade card, the unnormalized weight for each tier (`COMMON`, `RARE`, `EPIC`, `LEGENDARY`) is defined as:
+Standard monster encounter rooms are **not** guaranteed to drop equipment on every clear (defaulting to `🪙 Bounty Chips` when no equipment drops). Both the **Equipment Drop Probability** and the **4-Tier Rarity Weights** scale multiplicatively with the player's **Overcharge Boost Factor `X%`** (`x_pct = (overcharge / max_overcharge) * 0.50 + bet_tier * 0.20`):
 
-`w_common = max(0.0, (58.0 - 4.5 * float(stratum_index - 1))) * int(not has_overdrive_bet)`
+`final_equip_drop_chance = clamp(BASE_EQUIP_DROP_CHANCE (0.35) * (1.0 + x_pct), 0.0, 0.95)`
 
-`w_rare = 28.0 + 1.5 * float(stratum_index - 1) + 27.0 * int(has_overdrive_bet)`
+`w_common = 60.0`
 
-`w_epic = (11.0 + 2.0 * float(stratum_index - 1)) * (1.0 + 2.0 * int(has_overdrive_bet))`
+`w_rare = 26.0 * (1.0 + 0.50 * x_pct)`
 
-`w_legendary = (3.0 + 1.2 * float(stratum_index - 1)) * (1.0 + 3.0 * int(has_overdrive_bet))`
+`w_epic = 11.0 * (1.0 + 1.20 * x_pct)`
+
+`w_legendary = 3.0 * (1.0 + 2.00 * x_pct)`
+
+The exact same `(1.0 + k * x_pct)` Overcharge multiplier also boosts **Bucky's Forge card stat magnitudes (`Base * (1 + 0.5 * X%)`)**, **Old Rex's Black-Market discounts & Mystery Contraband Box payouts (`Base * (1 + X%)`)**, and **Random Event beneficial outcome weights & chip rewards (`Base * (1 + X%)`)**.
 
 **Variables:**
 | Variable | Type | Range | Source | Description |

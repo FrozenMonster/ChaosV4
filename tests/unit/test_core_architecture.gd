@@ -24,17 +24,14 @@ func _init() -> void:
 		failed += 1
 		printerr("FAIL: Combat RNG polluted Loot RNG stream!")
 
-	# Test 2: Overdrive Bet (-25 Overcharge) guarantees 0% COMMON drops across 200 rolls
-	var bet_common_count: int = 0
-	for idx in range(200):
-		var r: String = rng_a.roll_rarity(1, true, 3, idx)
-		if r == "COMMON":
-			bet_common_count += 1
-	if bet_common_count == 0:
+	# Test 2: Multiplicative Overcharge Boost Formula: Base_Drop (0.35) * (1.0 + X%) and Rarity Weight * (1.0 + k * X%)
+	var base_drop: float = DeterministicRNGScript.compute_equipment_drop_chance(0.0, 0)
+	var boosted_drop: float = DeterministicRNGScript.compute_equipment_drop_chance(1.0, 2) # x_pct = 0.50 + 0.40 = 0.90 -> 0.35 * 1.90 = 0.665
+	if is_equal_approx(base_drop, 0.35) and is_equal_approx(boosted_drop, 0.35 * 1.90):
 		passed += 1
 	else:
 		failed += 1
-		printerr("FAIL: Overdrive Bet rolled COMMON item!")
+		printerr("FAIL: Multiplicative Base * (1 + X%) drop formula mismatch!")
 
 	# Test 3: Room Overcharge Budget Math (24 hits + 3 finals + 2 reloads + 2 grazes + 1 saboteur = 82.0 Overcharge)
 	var room_yield: float = (

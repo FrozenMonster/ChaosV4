@@ -69,12 +69,12 @@ Governs the zero-backtrack node-graph floor generator featuring **Hades-style na
    - **Category 2 — `TACTICAL_ITEM_DOOR` (【战术道具门】 — Electric Cyan Crest)**:
      - Rewards: `Active Item [Q]` (`25%` weight) or `Passive Relic [7]/[8]/[9]` (`75%` weight).
      - *Mutex & Duplicate Filter*: Automatically excludes already-equipped Relic IDs and any Relic sharing an active `exclusivity_group` tag.
-   - **Category 3 — `RANDOM_EVENT_DOOR` (【随机事件/整备门】 — Violet / Forge Crest)**:
-     - Combines **Bounty Chips (`🪙`), HP/Armor (`❤️/🛡️`), Overcharge (`⚡`), and Special Monsters/NPCs**:
-       1. *Old Rex's Skewer & Black-Market Stall* (Spend `🪙 Bounty Chips` on weapons/relics/armor).
-       2. *Bucky's Rest & Overcharge Forge* (Choose 1 free: Restore `+2 HP` OR Upgrade Primary/Heavy base damage `+15%` & gain `+1 Armor`).
-       3. *Corporate "Voluntary Overtime" Blood Siphon* (Sacrifice `1 Armor/HP` -> instantly gain `+50 🪙 Bounty Chips` + `100%` Overcharge).
-       4. *High-Value Bounty Ambush* (Defeat 1 Elite + fodder wave within `30s` -> `+60 🪙 Bounty Chips` + guaranteed Relic).
+   - **Category 3 — `SAFE_PIT_STOP_DOOR` (【安全屋：黑市/铁匠铺门】 — Emerald/Amber Sanctuary Crest, ~20% / Guaranteed Mid-Floor)**:
+     - **100% Monster-Free Rule**: Whenever a door is marked as **Old Rex's Black-Market** or **Bucky's Forge**, the room is **guaranteed 100% free of hostile monsters**, serving as a pure safe sanctuary.
+   - **Category 4 — `RANDOM_EVENT_DOOR` (【？未知随机事件门】 — Violet Anomaly Crest, ~25% Occasional Spawn)**:
+     - Does NOT spawn after every room. When it appears, it is a true mystery gamble (**~50% Non-Combat Anomaly / Quest NPC** vs. **~50% High-Value Monster/Elite Ambush**):
+       1. *Corporate "Voluntary Overtime" Blood Siphon / Ada's Side-Quest* (Non-combat risk/reward).
+       2. *High-Value Bounty Ambush* (Monster encounter: defeat 1 Elite + fodder wave for `+45–60 🪙 Bounty Chips` + high-tier drop).
 4. **Pre-Door Overdrive Bet (`[F]` Key — `-25.0⚡` Wager)**:
    - Standing within `42.0 px` of an unlocked `ARMORY_DOOR` or `TACTICAL_ITEM_DOOR` after `room_cleared` allows pressing **`[F]`** to spend **`25.0⚡` Overcharge** and lock in an **Overdrive Bet**:
      - **Hazard Applied to Next Room**: Increases next room's encounter budget by **`+35%`**, enemy HP by **`+25%`**, and rolls 1 hazard modifier: `ELITE_REINFORCER` (+1 Elite with `EliteModifierComponent`), `OVERCLOCKED_PROJECTILES` (`+20%` enemy bullet speed), or `DEADLINE_BLITZ_30S` (`30s` bonus timer).

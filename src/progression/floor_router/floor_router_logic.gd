@@ -85,13 +85,21 @@ func generate_room_node(stratum_idx: int, node_idx: int, has_overdrive_bet: bool
 
 
 func _roll_exits(rng: RandomNumberGenerator, count: int) -> Array[Dictionary]:
+	# Standard exits are 1-2 Monster Encounter Combat Doors (ARMORY_DOOR / TACTICAL_ITEM_DOOR).
+	# Only occasionally spawns a 3rd door: either a 100% Monster-Free SAFE_PIT_STOP_DOOR (Black-Market / Forge)
+	# or a 50/50 RANDOM_EVENT_DOOR (which may contain monster ambushes or non-combat anomalies).
 	var sockets: Array[String] = ["NORTH_WEST", "NORTH_EAST", "EAST_WING"]
-	var cats: Array[String] = ["ARMORY_DOOR", "TACTICAL_ITEM_DOOR", "RANDOM_EVENT_DOOR"]
-	var out: Array[Dictionary] = []
-	for i in range(clampi(count, 1, 3)):
+	var out: Array[Dictionary] = [
+		{"socket": sockets[0], "category": "ARMORY_DOOR", "has_monsters": true, "bet_locked": false}
+	]
+	if count >= 2:
+		out.append({"socket": sockets[1], "category": "TACTICAL_ITEM_DOOR", "has_monsters": true, "bet_locked": false})
+	if count >= 3:
+		var is_safe_pitstop: bool = (node_index == 3 or rng.randf() < 0.35)
 		out.append({
-			"socket": sockets[i],
-			"category": cats[i % cats.size()],
+			"socket": sockets[2],
+			"category": "SAFE_PIT_STOP_DOOR" if is_safe_pitstop else "RANDOM_EVENT_DOOR",
+			"has_monsters": false if is_safe_pitstop else (rng.randf() < 0.50),
 			"bet_locked": false
 		})
 	return out

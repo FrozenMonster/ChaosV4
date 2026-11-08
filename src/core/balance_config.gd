@@ -33,6 +33,13 @@ const AEGIS_PIPS_REQUIRED: int = 3
 const PERFECT_RELOADS_PER_PIP: int = 3
 const INVULN_DURATION: float = 1.0
 
+# --- Loot Drop & Overcharge Multiplicative Boost Constants (Base * (1 + X%)) ---
+const BASE_EQUIP_DROP_CHANCE: float = 0.35
+const MAX_OVERCHARGE_DROP_BOOST: float = 0.80 # At 100⚡, drop chance = 0.35 * (1 + 0.80) = 63.0%
+const BASE_WEIGHT_COMMON: float = 60.0
+const BASE_WEIGHT_RARE: float = 26.0
+const BASE_WEIGHT_EPIC: float = 11.0
+const BASE_WEIGHT_LEGENDARY: float = 3.0
 # --- Event Bus & Bullet Pool Safety Caps (ADR-001 & ADR-002) ---
 const MAX_RECURSION_DEPTH: int = 2
 const MAX_PROCS_PER_FRAME: int = 32

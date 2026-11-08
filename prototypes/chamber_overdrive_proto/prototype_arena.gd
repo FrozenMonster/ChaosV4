@@ -194,12 +194,18 @@ var floating_texts: Array[Dictionary] = []
 var doors: Array[Dictionary] = []
 
 # --- Room & Progression State ---
-var room_number: int = 1
+var room_number: int = 0 # Starts at 0 = Ship Hub Firing Range!
 var room_cleared: bool = false
-var room_objective: String = "EXTERMINATION" # EXTERMINATION, SABOTAGE_BEACONS, OVERDRIVE_SURVIVAL
+var room_objective: String = "SHIP_HUB" # SHIP_HUB, EXTERMINATION, SABOTAGE_BEACONS, OVERDRIVE_SURVIVAL, PIT_STOP_SHOP, BOSS_FIGHT
+var room_footprint_name: String = "「讨薪号」飞船基地靶场"
+var interior_obstacles: Array[Rect2] = []
+var pit_stop_cards: Array[Dictionary] = []
+var boss_hitless_valid: bool = true
 var survival_timer: float = 0.0
+var room_Cleared_flag: bool = false
 var active_overdrive_bet: bool = false
-var current_event_popup: String = ""
+var active_overdrive_tier: int = 0 # 0 = Base (35% drop), 1 = -25⚡ (65% drop), 2 = -50⚡ (90% drop, 0% White), 3 = -75⚡ (100% drop, 100% Epic/Legendary!)
+var current_event_popup: String = "欢迎来到「讨薪号」飞船靶场! 打木桩试枪或走向上方【🚀空投井】按[E]下洞 (按[N]直达黑市/铁匠铺, 按[B]直达多部位Boss战!)"
 var screen_shake: float = 0.0
 var camera_kick_ofs: Vector2 = Vector2.ZERO
 var hitstop_timer: float = 0.0
@@ -207,12 +213,13 @@ var elapsed_time: float = 0.0
 var player_squash: Vector2 = Vector2.ONE
 var forge_dmg_mult: float = 1.0
 var forge_graze_cap_bonus: int = 0
+var forge_sweet_bonus: float = 0.0
 
 
 func _ready() -> void:
 	_load_assets_and_audio()
 	ammo = _cur_primary()["mag_size"]
-	_setup_room(1, "armory", false)
+	_setup_room(0, "hub", false)
 
 
 func _load_assets_and_audio() -> void:
@@ -401,6 +408,21 @@ func _unhandled_input(event: InputEvent) -> void:
 				_resolve_passive_swap(1)
 			KEY_9:
 				_resolve_passive_swap(2)
+			KEY_4:
+				_select_pit_stop_card(0)
+			KEY_5:
+				_select_pit_stop_card(1)
+			KEY_6:
+				_select_pit_stop_card(2)
+			KEY_H:
+				room_number = 0
+				_setup_room(0, "hub", false)
+			KEY_N:
+				room_number = maxi(1, room_number)
+				_setup_room(room_number, "pit_stop", false)
+			KEY_B:
+				room_number = 5
+				_setup_room(5, "boss", active_overdrive_bet)
 	elif event is InputEventMouseButton and event.pressed:
 		if event.button_index == MOUSE_BUTTON_RIGHT:
 			_try_fire_heavy()
@@ -443,7 +465,13 @@ func _update_player(delta: float) -> void:
 	player_pos.x = clampf(player_pos.x, ARENA_RECT.position.x + PLAYER_RADIUS, ARENA_RECT.end.x - PLAYER_RADIUS)
 	player_pos.y = clampf(player_pos.y, ARENA_RECT.position.y + PLAYER_RADIUS, ARENA_RECT.end.y - PLAYER_RADIUS)
 
-	# Keep player out of solid deployed shield pylons
+	# Keep player out of solid deployed shield pylons and interior footprint obstacles
+	for obs_rect in interior_obstacles:
+		if obs_rect.grow(PLAYER_RADIUS * 0.85).has_point(player_pos):
+			var center := obs_rect.get_center()
+			var push := (player_pos - center).normalized()
+			player_pos += (push if push.length_squared() > 0.01 else Vector2.DOWN) * 5.0
+
 	for t in cover_tables:
 		if t["flipped"] and t["hp"] > 0.0:
 			var rect: Rect2 = t["rect"]
@@ -515,7 +543,7 @@ func _on_reload_pressed() -> void:
 		return
 	reload_attempted = true
 	var s_start: float = p_gun["sweet_start"]
-	var s_end: float = p_gun["sweet_end"]
+	var s_end: float = p_gun["sweet_end"] + forge_sweet_bonus
 	if _has_passive("wide_sweet"):
 		s_end += 0.08
 
@@ -815,6 +843,14 @@ func _update_bullets(delta: float) -> void:
 			b["active"] = false
 			continue
 
+		# Check interior footprint wall obstacles (L-Bend wall / Central Reactor Pillar)
+		for obs_rect in interior_obstacles:
+			if obs_rect.has_point(b["pos"]):
+				b["active"] = false
+				break
+		if not b["active"]:
+			continue
+
 		# Check deployed Aegis Shield Pylon collision
 		for t in cover_tables:
 			if t["flipped"] and t["hp"] > 0.0 and t["rect"].has_point(b["pos"]):
@@ -935,12 +971,17 @@ func _damage_enemy(e: Dictionary, amount: float, is_final: bool, from_direct_sho
 		return
 	var is_stunned: bool = e.get("stun_timer", 0.0) > 0.0
 	var final_dmg: float = amount * (1.30 if is_stunned else 1.0)
-	e["hp"] -= final_dmg
+	if e.get("is_dummy", false):
+		e["hp"] = maxf(20.0, e["hp"] - final_dmg)
+		if e["hp"] <= 40.0:
+			e["hp"] = e["max_hp"]
+	else:
+		e["hp"] -= final_dmg
 	e["flash"] = 0.12
 	_play_sfx("hit", 0.9, 1.15)
 
 	# Apply knockback & Final Round hitstop/stagger!
-	var kb_res: float = 0.35 if e.get("is_elite", false) else 0.0
+	var kb_res: float = 0.85 if e.get("is_boss", false) else (1.0 if e.get("is_dummy", false) else (0.35 if e.get("is_elite", false) else 0.0))
 	if knockback_vec.length_squared() > 0.1:
 		e["pos"] += knockback_vec * (1.0 - kb_res)
 		e["pos"].x = clampf(e["pos"].x, ARENA_RECT.position.x + 22.0, ARENA_RECT.end.x - 22.0)
@@ -981,6 +1022,21 @@ func _damage_enemy(e: Dictionary, amount: float, is_final: bool, from_direct_sho
 		var chip_drop: int = (25 if e.get("is_elite", false) else 10) * (2 if active_overdrive_bet else 1)
 		bounty_chips += chip_drop
 		_spawn_text(e["pos"], "+%d 🪙悬赏工分币" % chip_drop, Color(1.0, 0.88, 0.3))
+		if e.get("is_boss", false) and boss_hitless_valid:
+			max_hp += 1
+			hp = mini(max_hp, hp + 1)
+			max_overcharge += 15.0
+			overcharge = max_overcharge
+			_spawn_text(e["pos"] + Vector2(0, -36), "🏆 无伤击败首领! 掉落【大师膛室核心】(生命上限+1❤️ & 超载上限+15⚡!)", Color(1.0, 0.88, 0.2))
+			current_event_popup = "🏆 恭喜无伤击败首领! 永久获得【大师膛室核心】: 最大生命+1❤️ & 超载上限提升至 %d⚡!" % int(max_overcharge)
+		if e.get("is_part", false):
+			for parent_e in enemies:
+				if parent_e.get("is_boss", false) and parent_e["hp"] > 0.0:
+					parent_e[e.get("part_key", "")] = false
+					parent_e["stun_timer"] = 2.2
+					parent_e["windup"] = 0.0
+					_add_overcharge(CHARGE_WEAKPOINT_INTERRUPT, "💥 首领部位击破 [%s]! 永久废除该招式 & +22⚡!" % e.get("part_name", "部位"))
+					_award_aegis_pip("首领部位破坏")
 		if elapsed_time - last_kill_time <= 3.0 and _cur_dynamo()["id"] == "kill_chain" and not room_cleared:
 			_add_overcharge(_cur_dynamo()["bonus"], "⚡狂暴连杀核心 +6⚡")
 		last_kill_time = elapsed_time
@@ -999,13 +1055,14 @@ func _damage_player(dmg: int, is_shield_piercing: bool = false) -> void:
 			if b["active"] and b["team"] == "enemy" and b["pos"].distance_to(player_pos) <= 95.0:
 				b["active"] = false
 		shockwaves.append({"pos": player_pos, "radius": 18.0, "max_r": 95.0, "timer": 0.28, "col": Color(0.2, 0.9, 1.0, 0.44)})
-		_spawn_text(player_pos + Vector2(0, -34), "🛡️ 过载护盾碎裂震波! (保住无伤金身 | 攒3格重构点可恢复)", Color(0.3, 0.95, 1.0))
+		_spawn_text(player_pos + Vector2(0, -34), "🛡️ 过载护盾碎裂震波! (保住Boss无伤金身 | 攒3格重构点恢复)", Color(0.3, 0.95, 1.0))
 	else:
 		hp = maxi(1, hp - dmg)
+		boss_hitless_valid = false
 		if is_shield_piercing:
-			_spawn_text(player_pos + Vector2(0, -34), "⚠️ 破盾穿甲重击! 直接 -1 ❤️生命!", Color(1.0, 0.15, 0.45))
+			_spawn_text(player_pos + Vector2(0, -34), "⚠️ 破盾穿甲重击! 直接 -1 ❤️生命! (无伤金身已破)", Color(1.0, 0.15, 0.45))
 		else:
-			_spawn_text(player_pos + Vector2(0, -30), "受击 -1 ❤️生命!", Color(1.0, 0.25, 0.25))
+			_spawn_text(player_pos + Vector2(0, -30), "受击 -1 ❤️生命! (无伤金身已破)", Color(1.0, 0.25, 0.25))
 
 
 func _add_overcharge(amount: float, label: String) -> void:
@@ -1018,14 +1075,33 @@ func _update_enemies(delta: float) -> void:
 	if not room_cleared and room_objective == "OVERDRIVE_SURVIVAL":
 		survival_timer = maxf(0.0, survival_timer - delta)
 
+	var boss_pos := Vector2(640.0, 210.0)
+	for e in enemies:
+		if e.get("is_boss", false) and e["hp"] > 0.0:
+			boss_pos = e["pos"]
+			break
+
 	var speed_mult: float = 1.25 if active_overdrive_bet else 1.0
 	for e in enemies:
 		if e["hp"] <= 0.0:
 			continue
 		if e["flash"] > 0.0:
 			e["flash"] -= delta
+		if e.get("is_part", false):
+			e["pos"] = boss_pos + e.get("part_offset", Vector2.ZERO)
+			continue
 		if e.get("stun_timer", 0.0) > 0.0:
 			e["stun_timer"] -= delta
+			continue
+		if e.get("is_dummy", false):
+			if e.get("is_elite", false):
+				if e["windup"] > 0.0:
+					e["windup"] -= delta
+				else:
+					e["fire_cd"] -= delta
+					if e["fire_cd"] <= 0.0:
+						e["windup"] = 1.1
+						e["fire_cd"] = 2.6
 			continue
 
 		var cryo_mult: float = 1.0
@@ -1052,13 +1128,27 @@ func _update_enemies(delta: float) -> void:
 					e["windup"] = 0.85 # Elite/Boss Exclusive Weak-Point Interrupt window!
 					e["fire_cd"] = e["cadence"]
 				else:
-					# Fodder mobs fire directly with zero interrupt reticle clutter!
 					_enemy_fire(e, speed_mult * cryo_mult)
 					e["fire_cd"] = e["cadence"]
 
 
 func _enemy_fire(e: Dictionary, speed_mult: float) -> void:
 	var aim: Vector2 = (player_pos - e["pos"]).normalized()
+	if e.get("is_boss", false):
+		# Multi-Part Boss Attack: fires left missile salvo (if Left Pod alive), right piercing fan (if Right Clamp alive), plus core ring!
+		for i in range(10):
+			var d := Vector2.RIGHT.rotated(TAU * float(i) / 10.0 + elapsed_time)
+			_spawn_bullet(e["pos"], d * 215.0 * speed_mult, 1.0, "enemy", 6.5, false, false, false, false)
+		if e.get("left_pod_alive", false):
+			for ang_deg in [-25.0, 25.0]:
+				var d := aim.rotated(deg_to_rad(ang_deg))
+				_spawn_bullet(e["pos"] + Vector2(-46, 0), d * 260.0 * speed_mult, 1.0, "enemy", 7.5, false, false, false, false)
+		if e.get("right_clamp_alive", false):
+			for ang_deg in [-14.0, 0.0, 14.0]:
+				var d := aim.rotated(deg_to_rad(ang_deg))
+				_spawn_bullet(e["pos"] + Vector2(46, 0), d * 340.0 * speed_mult, 1.0, "enemy", 8.0, false, false, false, true)
+		return
+
 	var is_piercing_sig: bool = e.get("is_elite", false)
 	match e["archetype"]:
 		"burst":
@@ -1074,7 +1164,7 @@ func _enemy_fire(e: Dictionary, speed_mult: float) -> void:
 
 
 func _check_room_state() -> void:
-	if room_cleared:
+	if room_cleared or room_objective == "SHIP_HUB" or room_objective == "PIT_STOP_SHOP":
 		return
 
 	var obj_done: bool = false
@@ -1095,6 +1185,12 @@ func _check_room_state() -> void:
 					break
 			if not any_alive:
 				obj_done = true
+	elif room_objective == "BOSS_FIGHT":
+		obj_done = true
+		for e in enemies:
+			if e.get("is_boss", false) and e["hp"] > 0.0:
+				obj_done = false
+				break
 	else:
 		obj_done = true
 		for e in enemies:
@@ -1120,49 +1216,71 @@ func _check_room_state() -> void:
 
 
 func _spawn_three_category_doors() -> void:
-	# Spatially Distributed Hades-Style Exits (North-West, North-East, and East Wall Sockets!)
-	doors = [
-		{
-			"cat": "armory",
-			"title": "↖【1】军械库门 (枪械门)",
-			"subtitle": "掉落：主武器/重火器/核心 (押注保底蓝冲金)",
-			"rect": Rect2(140.0, 92.0, 250.0, 54.0),
+	doors.clear()
+	# Normal rooms spawn 1-2 Combat Doors (100% monster encounter);
+	# Only occasionally (~30% or every 4th room) spawns a non-combat Safe Shop/Forge Door or a 50/50 Random Event Door!
+	doors.append({
+		"cat": "armory",
+		"title": "↖【战斗·军械倾向门】(有怪)",
+		"subtitle": "基础35%掉军械 (按[F]叠加过载最高100%必爆紫/金!)",
+		"rect": Rect2(140.0, 92.0, 275.0, 54.0),
+		"bet": false,
+		"bet_tier": 0,
+		"color": Color(1.0, 0.68, 0.15)
+	})
+	doors.append({
+		"cat": "item",
+		"title": "↗【战斗·道具倾向门】(有怪)",
+		"subtitle": "基础35%掉芯片 (按[F]叠加过载拉高爆率与稀有度!)",
+		"rect": Rect2(605.0, 92.0, 275.0, 54.0),
+		"bet": false,
+		"bet_tier": 0,
+		"color": Color(0.2, 0.9, 1.0)
+	})
+
+	# Third door only appears occasionally: either a 100% Monster-Free Safe Shop/Forge, or a Mystery Random Event (may contain ambush monsters!)
+	if room_number % 4 == 3 or randf() < 0.22:
+		doors.append({
+			"cat": "pit_stop",
+			"title": "➡【安全屋·黑市与铁匠铺】(无怪)",
+			"subtitle": "100%无怪休整：老雷克斯黑市 / 巴克改枪",
+			"rect": Rect2(945.0, 285.0, 250.0, 58.0),
 			"bet": false,
-			"color": Color(1.0, 0.68, 0.15)
-		},
-		{
-			"cat": "item",
-			"title": "↗【2】战术道具门 (道具门)",
-			"subtitle": "掉落：四阶稀有度芯片 (上限3槽)",
-			"rect": Rect2(640.0, 92.0, 250.0, 54.0),
+			"bet_tier": 0,
+			"color": Color(0.25, 0.95, 0.55)
+		})
+	elif randf() < 0.35:
+		doors.append({
+			"cat": "anomaly_event",
+			"title": "➡【？未知随机事件门】(可能有怪!)",
+			"subtitle": "奇遇事件 或 精英悬赏伏击 (高风险高回报)",
+			"rect": Rect2(945.0, 285.0, 250.0, 58.0),
 			"bet": false,
-			"color": Color(0.2, 0.9, 1.0)
-		},
-		{
-			"cat": "event",
-			"title": "➡【3】奇遇与整备门 (东侧出口)",
-			"subtitle": "老雷克斯盲盒黑市 / 巴克四维铁匠铺",
-			"rect": Rect2(955.0, 285.0, 240.0, 58.0),
-			"bet": false,
+			"bet_tier": 0,
 			"color": Color(0.85, 0.42, 1.0)
-		}
-	]
+		})
 
 
 func _on_bet_pressed() -> void:
 	if not room_cleared:
 		return
 	for d in doors:
-		if d["rect"].grow(42.0).has_point(player_pos) and d["cat"] != "event":
-			if not d["bet"]:
-				if overcharge >= 25.0:
-					overcharge -= 25.0
-					d["bet"] = true
-					_play_sfx("perfect_reload", 0.9, 0.95)
-					_spawn_text(d["rect"].get_center(), "★ 超载押注锁定! (-25⚡ -> 下房双倍🪙 & 0%白装保底蓝紫金!)", Color(1.0, 0.35, 0.2))
-				else:
-					_play_sfx("jam", 1.0, 1.05)
-					_spawn_text(player_pos + Vector2(0, -30), "超载押注需要 25⚡ 能量!", Color(1.0, 0.4, 0.4))
+		if d["rect"].grow(42.0).has_point(player_pos):
+			var cur_tier: int = int(d.get("bet_tier", 0))
+			if cur_tier >= 3:
+				_spawn_text(player_pos + Vector2(0, -30), "已达最高 3 阶过载注入 (基础值 × (1+X%) 已拉满)!", Color(1.0, 0.85, 0.2))
+				return
+			if overcharge >= 25.0:
+				overcharge -= 25.0
+				cur_tier += 1
+				d["bet_tier"] = cur_tier
+				d["bet"] = true
+				_play_sfx("perfect_reload", 0.92 + 0.08 * cur_tier, 0.98 + 0.08 * cur_tier)
+				var x_pct: int = int(round((clampf(overcharge / max_overcharge, 0.0, 1.0) * 0.50 + float(cur_tier) * 0.20) * 100.0))
+				_spawn_text(d["rect"].get_center(), "★ 过载注入[%d阶] (-25⚡) -> 下房全收益/爆率/铁匠黑市品质 × (1+%d%%)!" % [cur_tier, x_pct], Color(1.0, 0.45, 0.2))
+			else:
+				_play_sfx("jam", 1.0, 1.05)
+				_spawn_text(player_pos + Vector2(0, -30), "再注入一阶需要 25⚡ 能量! (当前 %d/3阶)" % cur_tier, Color(1.0, 0.4, 0.4))
 
 
 func _on_interact_pressed() -> void:
@@ -1203,42 +1321,104 @@ func _on_interact_pressed() -> void:
 func _enter_door(d: Dictionary) -> void:
 	var cat: String = d["cat"]
 	var bet: bool = d["bet"]
-	room_number += 1
+	var b_tier: int = int(d.get("bet_tier", 1 if bet else 0))
+	active_overdrive_tier = b_tier
 	_play_sfx("perfect_reload", 1.0, 1.08)
+
+	if cat == "launch":
+		room_number = 1
+		current_event_popup = "🚀 已空投至星球X第 1 层! 过载加成公式: 基础概率35% × (1 + X%)! ([N]进黑市 | [B]打Boss)"
+		_setup_room(1, "armory", bet)
+		return
+
+	room_number += 1
+	# Multiplicative Drop Formula: final_drop_chance = BASE_DROP_CHANCE (0.35) * (1.0 + x_pct)
+	# where x_pct = (overcharge / max_overcharge) * 0.50 + bet_tier * 0.20
+	var x_pct: float = clampf(overcharge / max_overcharge, 0.0, 1.0) * 0.50 + float(b_tier) * 0.20
+	var drop_chance: float = 0.35 * (1.0 + x_pct)
 
 	match cat:
 		"armory":
-			primary_idx = (primary_idx + 1) % primary_weapons.size()
-			ammo = _cur_primary()["mag_size"]
-			heavy_idx = (heavy_idx + 1) % heavy_weapons.size()
-			current_event_popup = "【军械门奖励】切换主枪 -> %s | 重火器 -> %s" % [_cur_primary()["name"], _cur_heavy()["name"]]
+			if randf() <= drop_chance:
+				primary_idx = (primary_idx + 1) % primary_weapons.size()
+				ammo = _cur_primary()["mag_size"]
+				heavy_idx = (heavy_idx + 1) % heavy_weapons.size()
+				current_event_popup = "★【军械爆出! (35%% × (1+%d%%) = %.1f%%)】切换 -> %s | %s" % [int(round(x_pct * 100.0)), drop_chance * 100.0, _cur_primary()["name"], _cur_heavy()["name"]]
+			else:
+				var consolation_chips: int = int(round(28.0 * (1.0 + x_pct)))
+				bounty_chips += consolation_chips
+				current_event_popup = "🪙【未出军械 (当前爆率 35%%×(1+%d%%)=%.1f%%)】获得赏金 +%d🪙! (过载越高，(1+X%%)加成越高!)" % [int(round(x_pct * 100.0)), drop_chance * 100.0, consolation_chips]
 		"item":
-			_grant_item_door_reward(bet)
-		"event":
-			_trigger_random_event_room()
+			if randf() <= drop_chance:
+				_grant_item_door_reward(x_pct)
+			else:
+				var consolation_chips: int = int(round(28.0 * (1.0 + x_pct)))
+				bounty_chips += consolation_chips
+				current_event_popup = "🪙【未出芯片 (当前爆率 35%%×(1+%d%%)=%.1f%%)】获得赏金 +%d🪙! (过载越高，(1+X%%)加成越高!)" % [int(round(x_pct * 100.0)), drop_chance * 100.0, consolation_chips]
+		"pit_stop":
+			current_event_popup = "🕊️【安全屋·过载加成 +%d%%】高过载已强化巴克铁匠炉词条数值 & 老雷克斯黑市折扣/盲盒倍率!" % int(round(x_pct * 100.0))
+			_setup_room(room_number, "pit_stop", bet)
+			return
+		"anomaly_event":
+			# Higher x_pct increases beneficial anomaly weight: Base 45% * (1 + 0.5 * x_pct)
+			var good_event_chance: float = clampf(0.45 * (1.0 + 0.50 * x_pct), 0.0, 0.85)
+			if randf() > good_event_chance:
+				var ambush_bounty: int = int(round(45.0 * (1.0 + x_pct)))
+				bounty_chips += ambush_bounty
+				current_event_popup = "⚠️【随机事件·悬赏怪伏击! (过载加成+%d%%)】击败敌军入账 45×(1+%d%%) = +%d🪙!" % [int(round(x_pct * 100.0)), int(round(x_pct * 100.0)), ambush_bounty]
+				_setup_room(room_number, "armory", true)
+				return
+			else:
+				var bonus_chips: int = int(round(35.0 * (1.0 + x_pct)))
+				overcharge = max_overcharge
+				bounty_chips += bonus_chips
+				_award_aegis_pip("奇遇反应堆")
+				current_event_popup = "✨【随机事件·无怪奇遇 (过载加成+%d%%)】超载充满100% + 护盾重构+1 + 赏金 35×(1+%d%%) = +%d🪙!" % [int(round(x_pct * 100.0)), int(round(x_pct * 100.0)), bonus_chips]
+				_setup_room(room_number, "pit_stop", bet)
+				return
 
-	_setup_room(room_number, cat, bet)
+	if room_number % 5 == 0:
+		_setup_room(room_number, "boss", bet)
+	else:
+		_setup_room(room_number, cat, bet)
 
 
-func _grant_item_door_reward(bet: bool) -> void:
-	var pool: Array[Dictionary] = [
-		{"id": "wide_sweet", "name": "时序滑块卡扣 [军规·蓝]", "rarity": "RARE", "salvage": 25, "desc": "拓宽主动换弹的黄色完美甜区 (+8%)"},
+func _grant_item_door_reward(x_pct: float) -> void:
+	# Rarity weights also use Base_Weight * (1.0 + k * x_pct) multiplicative scaling!
+	var w_common: float = 60.0
+	var w_rare: float = 26.0 * (1.0 + 0.50 * x_pct)
+	var w_epic: float = 11.0 * (1.0 + 1.20 * x_pct)
+	var w_leg: float = 3.0 * (1.0 + 2.00 * x_pct)
+	var total_w: float = w_common + w_rare + w_epic + w_leg
+	var r_pick: float = randf() * total_w
+
+	var pool_common_rare: Array[Dictionary] = [
+		{"id": "wide_sweet", "name": "时序滑块卡扣 [军规·蓝]", "rarity": "RARE", "salvage": 25, "desc": "拓宽主动换弹的黄色完美甜区 (+8%)"}
+	]
+	var pool_epic: Array[Dictionary] = [
 		{"id": "final_amp", "name": "欧米茄强化撞针 [违禁·紫]", "rarity": "EPIC", "salvage": 40, "desc": "尾弹(Final Round)额外 +60% 暴击伤害与击退"},
-		{"id": "over_cap", "name": "高压电容线圈 [违禁·紫]", "rarity": "EPIC", "salvage": 40, "desc": "最大超载能量上限提升至 130⚡"},
+		{"id": "over_cap", "name": "高压电容线圈 [违禁·紫]", "rarity": "EPIC", "salvage": 40, "desc": "最大超载能量上限提升至 130⚡"}
+	]
+	var pool_leg: Array[Dictionary] = [
 		{"id": "shell_magnet", "name": "财务催收磁铁 [超载·金]", "rarity": "LEGENDARY", "salvage": 65, "desc": "战斗完美换弹额外 +4🪙 & 拆解收益+50%"}
 	]
-	var candidate: Dictionary = pool[randi() % pool.size()]
+	var chosen_pool: Array[Dictionary] = pool_common_rare
+	if r_pick >= w_common + w_rare + w_epic:
+		chosen_pool = pool_leg
+	elif r_pick >= w_common + w_rare:
+		chosen_pool = pool_epic
+	var candidate: Dictionary = chosen_pool[randi() % chosen_pool.size()]
 	var salv_val: int = candidate["salvage"]
 	if _has_passive(candidate["id"]):
 		bounty_chips += salv_val
-		current_event_popup = "【道具门】重复芯片自动核销 -> 获得 +%d 🪙悬赏工分币!" % salv_val
+		current_event_popup = "【道具爆出·重复核销】获得 +%d 🪙悬赏工分币!" % salv_val
 		return
 
 	if passive_items.size() < PASSIVE_CAP:
 		passive_items.append(candidate)
 		if candidate["id"] == "over_cap":
 			max_overcharge = 130.0
-		current_event_popup = "【道具门%s】获得 %s (%s)" % ["·押注保底高罕!" if bet else "", candidate["name"], candidate["desc"]]
+		current_event_popup = "★【道具爆出! (稀有权重×(1+%d%%))】获得 %s (%s)" % [int(round(x_pct * 100.0)), candidate["name"], candidate["desc"]]
 	else:
 		pending_passive_offer = candidate
 		current_event_popup = "【被动槽满 3/3】按 [7]/[8]/[9] 替换旧芯片并拆解(+%d🪙) -> 新芯片：%s" % [salv_val, candidate["name"]]
@@ -1256,33 +1436,45 @@ func _resolve_passive_swap(slot_index: int) -> void:
 	pending_passive_offer = {}
 
 
-func _trigger_random_event_room() -> void:
-	var roll: int = randi() % 3
-	if roll == 0:
-		# Bucky's Multi-Axis Forge (Strict +1 HP heal + Weapon/Exoskeleton tuning)
-		hp = mini(max_hp, hp + 1)
-		forge_dmg_mult += 0.15
+func _select_pit_stop_card(idx: int) -> void:
+	if pit_stop_cards.is_empty() or idx < 0 or idx >= pit_stop_cards.size():
+		return
+	var card: Dictionary = pit_stop_cards[idx]
+	if card.get("picked", false):
+		return
+	var cost: int = int(card.get("cost", 0))
+	if bounty_chips < cost:
+		_play_sfx("jam", 1.0, 1.1)
+		_spawn_text(player_pos + Vector2(0, -34), "🪙 悬赏工分币不足! 需要 %d🪙" % cost, Color(1.0, 0.35, 0.35))
+		return
+
+	bounty_chips -= cost
+	card["picked"] = true
+	_play_sfx("perfect_reload", 1.05, 1.18)
+	var cid: String = card.get("id", "")
+	var boost_mult: float = float(card.get("boost_mult", 1.0))
+	if cid == "forge_firepower":
+		var dmg_add: float = 0.15 * boost_mult
+		var sweet_add: float = 0.05 * boost_mult
+		forge_dmg_mult += dmg_add
+		forge_sweet_bonus += sweet_add
+		current_event_popup = "🔨【巴克铁匠铺(过载强化×%.2f)】全武器伤害 +%.1f%% & 换弹黄区拓宽 +%.1f%%!" % [boost_mult, dmg_add * 100.0, sweet_add * 100.0]
+	elif cid == "forge_exoskeleton":
 		forge_graze_cap_bonus = 1
-		current_event_popup = "【巴克铁匠铺·四维调校】恢复 +1 ❤️生命(严控上限) + 膛压强化(+15%伤害) + 外骨骼擦弹上限提升至 3次/滚!"
-	elif roll == 1:
-		# Old Rex's Mystery Contraband Blind Box (60 Bounty Chips)
-		if bounty_chips >= 60:
-			bounty_chips -= 60
-			overcharge = max_overcharge
-			bounty_chips += 110
-			current_event_popup = "【老雷克斯黑市·60🪙走私盲盒】开出金色大奖! 超载能量充满 100% + 爆出 110 🪙悬赏工分币!"
-		else:
-			bounty_chips += 45
-			current_event_popup = "【算盘姐支线委托】预支悬赏经费 -> 获得 +45 🪙悬赏工分币 & 补充 +1 格护盾重构点!"
-			_award_aegis_pip("算盘姐支线")
-	else:
-		# Rival Vesper Quota Bet
-		bounty_chips += 55
 		_award_aegis_pip("铁匠铺充能")
-		current_event_popup = "【奇遇·卷王薇拉的赌局】接下绩效挑战 -> 入账 +55 🪙悬赏工分币 & 护盾重构点 +1!"
+		if boost_mult >= 1.30:
+			_award_aegis_pip("高过载额外重构点")
+		current_event_popup = "🦿【巴克外骨骼(过载强化×%.2f)】单滚擦弹上限升至3次 & 护盾重构点+%d (0.42s翻滚落点锁死不变!)" % [boost_mult, 2 if boost_mult >= 1.30 else 1]
+	elif cid == "rex_blind_box":
+		var payout_chips: int = int(round(75.0 * boost_mult))
+		hp = mini(max_hp, hp + 1)
+		overcharge = max_overcharge
+		bounty_chips += payout_chips
+		current_event_popup = "🎲【老雷克斯走私盲盒(过载强化×%.2f)】恢复 +1❤️生命 + 充满100%能量 + 爆出 %d🪙!" % [boost_mult, payout_chips]
+	_spawn_text(player_pos + Vector2(0, -42), "★ 已选择: " + card.get("title", ""), Color(1.0, 0.88, 0.25))
 
 
-func _setup_room(r_num: int, _cat: String, bet: bool) -> void:
+func _setup_room(r_num: int, cat: String, bet: bool) -> void:
 	room_cleared = false
 	active_overdrive_bet = bet
 	bullets.clear()
@@ -1291,16 +1483,105 @@ func _setup_room(r_num: int, _cat: String, bet: bool) -> void:
 	cryo_zones.clear()
 	beacons.clear()
 	doors.clear()
+	interior_obstacles.clear()
+	pit_stop_cards.clear()
 	player_pos = Vector2(640.0, 560.0)
-	# Note: Overcharge Aegis Shield does NOT auto-refill on room entry! Must be earned via 3 Aegis Pips!
+
+	# --- MODE A: Room #0 = "The Debt-Collector" Ship Hub & Firing Range ---
+	if r_num == 0 or cat == "hub":
+		room_objective = "SHIP_HUB"
+		room_footprint_name = "「讨薪号」飞船基地靶场"
+		room_cleared = true
+		overcharge = max_overcharge
+		doors = [{
+			"cat": "launch",
+			"title": "🚀【空投发射井】出发讨薪!",
+			"subtitle": "按[E]空投第1层 (或按[F]押注25⚡带双倍buff开局!)",
+			"rect": Rect2(500.0, 92.0, 280.0, 56.0),
+			"bet": false,
+			"color": Color(0.2, 0.95, 0.65)
+		}]
+		cover_tables = [
+			{"rect": Rect2(320.0, 380.0, 96.0, 34.0), "flipped": false, "hp": 60.0, "type": "shield"},
+			{"rect": Rect2(860.0, 380.0, 88.0, 34.0), "flipped": false, "hp": 60.0, "type": "capacitor"}
+		]
+		barrels = [
+			{"pos": Vector2(640.0, 310.0), "alive": true, "type": "prism", "hp": 99, "label": "靶场无限折射棱镜"}
+		]
+		enemies = [
+			{"pos": Vector2(420.0, 220.0), "hp": 500.0, "max_hp": 500.0, "speed": 0.0, "radius": 20.0, "archetype": "burst", "is_elite": false, "is_dummy": true, "stun_timer": 0.0, "cadence": 99.0, "fire_cd": 99.0, "windup": 0.0, "flash": 0.0},
+			{"pos": Vector2(860.0, 220.0), "hp": 500.0, "max_hp": 500.0, "speed": 0.0, "radius": 26.0, "archetype": "sniper", "is_elite": true, "is_dummy": true, "stun_timer": 0.0, "cadence": 2.4, "fire_cd": 1.0, "windup": 0.0, "flash": 0.0}
+		]
+		return
+
+	# --- MODE B: Pit-Stop Sanctuary (Old Rex's Black-Market & Bucky's 4-Axis Forge scaled by Overcharge (1 + X%)) ---
+	if cat == "pit_stop":
+		room_objective = "PIT_STOP_SHOP"
+		var pit_x_pct: float = clampf(overcharge / max_overcharge, 0.0, 1.0) * 0.50 + float(active_overdrive_tier) * 0.20
+		var b_mult: float = 1.0 + 0.50 * pit_x_pct
+		var box_cost: int = int(round(60.0 / (1.0 + 0.35 * pit_x_pct))) # Higher Overcharge = bigger Rex discount!
+		room_footprint_name = "中继整备站 (过载加成 +%d%% -> 铁匠数值 & 黑市盲盒×%.2f!)" % [int(round(pit_x_pct * 100.0)), b_mult]
+		room_cleared = true
+		pit_stop_cards = [
+			{"id": "forge_firepower", "key": "[按 4]", "title": "🔨 巴克调校：膛压与换弹 (×%.2f过载增幅)" % b_mult, "desc": "武器伤害 +%.1f%% & 换弹黄区 +%.1f%%" % [15.0 * b_mult, 5.0 * b_mult], "cost": 0, "boost_mult": b_mult, "rarity": "EPIC", "color": Color(0.75, 0.35, 1.0), "picked": false},
+			{"id": "forge_exoskeleton", "key": "[按 5]", "title": "🦿 巴克外骨骼：擦弹矩阵 (×%.2f过载增幅)" % b_mult, "desc": "单滚擦弹升至3次 & 护盾重构+%d (锁0.42s)" % (2 if b_mult >= 1.30 else 1), "cost": 0, "boost_mult": b_mult, "rarity": "LEGENDARY", "color": Color(1.0, 0.78, 0.15), "picked": false},
+			{"id": "rex_blind_box", "key": "[按 6]", "title": "🎲 老雷克斯：折扣盲盒 [%d🪙]" % box_cost, "desc": "恢复+1❤️ + 充满100⚡ + 爆 %d🪙 赏金!" % int(round(75.0 * b_mult)), "cost": box_cost, "boost_mult": b_mult, "rarity": "LEGENDARY", "color": Color(0.2, 0.92, 1.0), "picked": false}
+		]
+		_spawn_three_category_doors()
+		return
+
+	# --- MODE C: Multi-Part Boss Showdown (The Quota-Crusher + Destructible Left Pod & Right Clamp) ---
+	if cat == "boss" or r_num % 5 == 0:
+		room_objective = "BOSS_FIGHT"
+		room_footprint_name = "零号金库：多部位破坏首领战"
+		boss_hitless_valid = true
+		cover_tables = [
+			{"rect": Rect2(320.0, 410.0, 96.0, 34.0), "flipped": false, "hp": 60.0, "type": "shield"},
+			{"rect": Rect2(860.0, 410.0, 88.0, 34.0), "flipped": false, "hp": 60.0, "type": "capacitor"}
+		]
+		barrels = [
+			{"pos": Vector2(240.0, 280.0), "alive": true, "type": "fuel", "label": "高爆燃料罐"},
+			{"pos": Vector2(1040.0, 280.0), "alive": true, "type": "cryo", "label": "深冷液氮罐"}
+		]
+		var boss_hp: float = 520.0 + r_num * 40.0
+		enemies.append({
+			"pos": Vector2(640.0, 210.0), "hp": boss_hp, "max_hp": boss_hp, "speed": 42.0, "radius": 38.0,
+			"archetype": "ring", "is_elite": true, "is_boss": true, "boss_name": "【考勤防暴主脑·铁算盘】",
+			"left_pod_alive": true, "right_clamp_alive": true, "stun_timer": 0.0, "cadence": 2.2, "fire_cd": 1.2, "windup": 0.0, "flash": 0.0
+		})
+		# Spawn Destructible BossPartNodes!
+		enemies.append({
+			"pos": Vector2(582.0, 215.0), "hp": 140.0, "max_hp": 140.0, "speed": 0.0, "radius": 20.0,
+			"archetype": "burst", "is_elite": false, "is_part": true, "part_key": "left_pod_alive",
+			"part_name": "左肩导弹巢", "part_offset": Vector2(-58.0, 6.0), "stun_timer": 0.0, "cadence": 99.0, "fire_cd": 99.0, "windup": 0.0, "flash": 0.0
+		})
+		enemies.append({
+			"pos": Vector2(698.0, 215.0), "hp": 140.0, "max_hp": 140.0, "speed": 0.0, "radius": 20.0,
+			"archetype": "sniper", "is_elite": false, "is_part": true, "part_key": "right_clamp_alive",
+			"part_name": "右臂穿甲钳", "part_offset": Vector2(58.0, 6.0), "stun_timer": 0.0, "cadence": 99.0, "fire_cd": 99.0, "windup": 0.0, "flash": 0.0
+		})
+		current_event_popup = "⚠️ 首领战开启! 先集火打爆它的【左肩导弹巢】或【右臂穿甲钳】可直接废除对应杀招并获 +22⚡! (护盾挡普攻不破无伤金身!)"
+		return
+
+	# --- MODE D: Standard Combat with 3 Non-Rectangular Room Footprints ---
+	var fp_roll: int = r_num % 3
+	if fp_roll == 1:
+		room_footprint_name = "地形：中央深渊环形室 (Ring-Pit)"
+		interior_obstacles = [Rect2(560.0, 290.0, 160.0, 110.0)]
+	elif fp_roll == 2:
+		room_footprint_name = "地形：L型折角巷战矿道 (L-Bend)"
+		interior_obstacles = [Rect2(80.0, 90.0, 260.0, 190.0), Rect2(940.0, 460.0, 260.0, 190.0)]
+	else:
+		room_footprint_name = "地形：双联天桥腔室 (Twin-Bridge)"
+		interior_obstacles = [Rect2(440.0, 310.0, 90.0, 90.0), Rect2(750.0, 310.0, 90.0, 90.0)]
 
 	# Cycle through the Differentiated Room Objective Modes!
 	if r_num % 3 == 2:
 		room_objective = "SABOTAGE_BEACONS"
 		beacons = [
-			{"pos": Vector2(210.0, 185.0), "hp": 110.0, "max_hp": 110.0, "flash": 0.0},
+			{"pos": Vector2(410.0, 185.0), "hp": 110.0, "max_hp": 110.0, "flash": 0.0},
 			{"pos": Vector2(640.0, 155.0), "hp": 110.0, "max_hp": 110.0, "flash": 0.0},
-			{"pos": Vector2(1060.0, 215.0), "hp": 110.0, "max_hp": 110.0, "flash": 0.0}
+			{"pos": Vector2(1040.0, 215.0), "hp": 110.0, "max_hp": 110.0, "flash": 0.0}
 		]
 	elif r_num % 3 == 0:
 		room_objective = "OVERDRIVE_SURVIVAL"
@@ -1308,26 +1589,24 @@ func _setup_room(r_num: int, _cat: String, bet: bool) -> void:
 	else:
 		room_objective = "EXTERMINATION"
 
-	# Proximity [E] Interactables: Left = Deployable Shield Pylon, Right = Overcharge Tap-Box Capacitor
 	cover_tables = [
-		{"rect": Rect2(340.0, 350.0, 96.0, 34.0), "flipped": false, "hp": 60.0, "type": "shield"},
-		{"rect": Rect2(830.0, 350.0, 88.0, 34.0), "flipped": false, "hp": 60.0, "type": "capacitor"}
+		{"rect": Rect2(340.0, 360.0, 96.0, 34.0), "flipped": false, "hp": 60.0, "type": "shield"},
+		{"rect": Rect2(830.0, 360.0, 88.0, 34.0), "flipped": false, "hp": 60.0, "type": "capacitor"}
 	]
-	# Ranged Hit-Trigger Interactables: Left = Volatile Fuel Drum, Mid = Refractor Prism, Right = Cryo-Coolant Tank
 	barrels = [
-		{"pos": Vector2(460.0, 255.0), "alive": true, "type": "fuel", "label": "高爆燃料罐"},
-		{"pos": Vector2(640.0, 285.0), "alive": true, "type": "prism", "hp": 3, "label": "折射棱镜柱"},
-		{"pos": Vector2(820.0, 255.0), "alive": true, "type": "cryo", "label": "深冷液氮罐"}
+		{"pos": Vector2(460.0, 245.0), "alive": true, "type": "fuel", "label": "高爆燃料罐"},
+		{"pos": Vector2(640.0, 245.0), "alive": true, "type": "prism", "hp": 3, "label": "折射棱镜柱"},
+		{"pos": Vector2(820.0, 245.0), "alive": true, "type": "cryo", "label": "深冷液氮罐"}
 	]
 
 	var count: int = 3 + mini(r_num, 3) + (1 if bet else 0)
 	var archetypes := ["burst", "ring", "sniper"]
 	for i in range(count):
 		var arch: String = archetypes[i % archetypes.size()]
-		var is_elite_mob: bool = (i == 0) # Exactly 1 Elite Commander per room with Weak-Point Interrupt & Shield-Piercing signature!
+		var is_elite_mob: bool = (i == 0)
 		var base_hp: float = (175.0 if is_elite_mob else 85.0) + r_num * 12.0
 		enemies.append({
-			"pos": Vector2(240.0 + i * (780.0 / float(maxi(1, count - 1))), randf_range(165.0, 245.0)),
+			"pos": Vector2(360.0 + i * (620.0 / float(maxi(1, count - 1))), randf_range(165.0, 225.0)),
 			"hp": base_hp,
 			"max_hp": base_hp,
 			"speed": 75.0,
@@ -1372,7 +1651,25 @@ func _draw() -> void:
 	for gy in range(int(ARENA_RECT.position.y), int(ARENA_RECT.end.y), 80):
 		draw_line(Vector2(ARENA_RECT.position.x, gy), Vector2(ARENA_RECT.end.x, gy), Color(0.18, 0.20, 0.25), 1.0)
 
+	# 1.2 Draw Non-Rectangular Interior Footprint Walls / Chasms
+	for obs_r in interior_obstacles:
+		draw_rect(obs_r, Color(0.06, 0.07, 0.10))
+		draw_rect(obs_r, Color(0.35, 0.42, 0.55), false, 3.0)
+
 	var font: Font = zh_font if zh_font != null else ThemeDB.fallback_font
+
+	# 1.3 Draw Interactive Pit-Stop Cards (Old Rex's Black-Market & Bucky's 4-Axis Forge)
+	for i in range(pit_stop_cards.size()):
+		var c: Dictionary = pit_stop_cards[i]
+		var c_rect := Rect2(140.0 + i * 340.0, 210.0, 310.0, 130.0)
+		var c_col: Color = c.get("color", Color.CYAN)
+		draw_rect(c_rect, Color(0.08, 0.10, 0.15, 0.95) if not c.get("picked", false) else Color(0.15, 0.22, 0.18, 0.7))
+		draw_rect(c_rect, c_col, false, 3.0)
+		var status_tag: String = " [✅已领取]" if c.get("picked", false) else (" " + str(c.get("key", "")))
+		draw_string(font, c_rect.position + Vector2(12, 32), str(c.get("title", "")) + status_tag, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, c_col.lightened(0.25))
+		draw_string(font, c_rect.position + Vector2(12, 68), str(c.get("desc", "")), HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color.WHITE)
+		var cost_lbl := "免费整备 (0🪙)" if int(c.get("cost", 0)) == 0 else ("花费: %d 🪙悬赏工分币" % int(c.get("cost", 0)))
+		draw_string(font, c_rect.position + Vector2(12, 104), cost_lbl + "  —  直接按对应数字键选择!", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(1.0, 0.88, 0.3))
 
 	# 1.5 Draw Floor Shell Casings, Debris & Cryo Zones (Alpha <= 45%)
 	for cz in cryo_zones:
@@ -1394,11 +1691,20 @@ func _draw() -> void:
 		draw_string(font, r.position + Vector2(10, 22), d["title"], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, col.lightened(0.3))
 		draw_string(font, r.position + Vector2(10, 42), d["subtitle"], HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color.WHITE)
 		if d["bet"]:
-			draw_string(font, r.position + Vector2(6, -8), "★ 已锁超载押注 (2x🪙 & 保底蓝冲金!)", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(1.0, 0.35, 0.2))
-		elif d["cat"] != "event":
-			draw_string(font, r.position + Vector2(6, -8), "[E] 进门  [F] 押注25⚡(0%白装)", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.8, 0.9, 1.0))
+			var bt: int = int(d.get("bet_tier", 1))
+			var x_bonus: int = int(round((clampf(overcharge / max_overcharge, 0.0, 1.0) * 0.50 + float(bt) * 0.20) * 100.0))
+			var eff_pct: float = 35.0 * (1.0 + float(x_bonus) / 100.0)
+			draw_string(font, r.position + Vector2(6, -8), "★ 过载加成(+%d%%): 爆率 35%%×(1+%d%%) = %.1f%% | 稀有度权重×(1+%d%%)" % [x_bonus, x_bonus, eff_pct, x_bonus], HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(1.0, 0.45, 0.2))
+		elif d["cat"] == "armory" or d["cat"] == "item" or d["cat"] == "launch":
+			var carry_x: int = int(round(clampf(overcharge / max_overcharge, 0.0, 1.0) * 50.0))
+			var cur_pct: float = 35.0 * (1.0 + float(carry_x) / 100.0)
+			draw_string(font, r.position + Vector2(6, -8), "[E] 进门(爆率35%%×(1+%d%%)=%.1f%%)  [F] 注入25⚡再+20%%系数!" % [carry_x, cur_pct], HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.8, 0.9, 1.0))
+		elif d["cat"] == "pit_stop":
+			var carry_x2: int = int(round(clampf(overcharge / max_overcharge, 0.0, 1.0) * 50.0))
+			draw_string(font, r.position + Vector2(6, -8), "[E] 进安全屋(铁匠/黑市享×(1+%d%%)加成)  [F] 注入25⚡再+20%%!" % carry_x2, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.4, 1.0, 0.65))
 		else:
-			draw_string(font, r.position + Vector2(6, -8), "[E] 进入黑市/铁匠铺/奇遇", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.9, 0.75, 1.0))
+			var carry_x3: int = int(round(clampf(overcharge / max_overcharge, 0.0, 1.0) * 50.0))
+			draw_string(font, r.position + Vector2(6, -8), "[E] 进未知事件(收益&好运率×(1+%d%%))  [F] 注入25⚡再+20%%!" % carry_x3, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.95, 0.7, 1.0))
 
 	# 2.5 Draw Corporate Signal Beacons (if SABOTAGE_BEACONS room mode)
 	for bc in beacons:
@@ -1466,13 +1772,19 @@ func _draw() -> void:
 
 		var mod_col := Color(3.0, 3.0, 3.0, 1.0) if e["flash"] > 0.0 else (Color(1.2, 0.95, 0.4, 1.0) if is_el else Color.WHITE)
 		if etex != null:
-			var sz := etex.get_size() * (1.35 if is_el else 1.0)
+			var scale_f: float = 2.2 if e.get("is_boss", false) else (1.35 if is_el else 1.0)
+			var sz := etex.get_size() * scale_f
 			draw_texture_rect(etex, Rect2(e["pos"] - sz * 0.5, sz), false, mod_col)
 		else:
 			draw_circle(e["pos"], e["radius"], Color.WHITE if e["flash"] > 0.0 else Color(0.95, 0.32, 0.32))
 
+		if e.get("is_part", false):
+			draw_string(font, e["pos"] + Vector2(-34, 30), "🎯[" + e.get("part_name", "部位") + "]", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.3, 0.98, 1.0))
+		elif e.get("is_dummy", false):
+			draw_string(font, e["pos"] + Vector2(-38, 32), "🎯靶场测试木桩", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.8, 0.9, 1.0))
+
 		var hp_pct: float = clampf(e["hp"] / e["max_hp"], 0.0, 1.0)
-		var bar_w: float = 52.0 if is_el else 38.0
+		var bar_w: float = 90.0 if e.get("is_boss", false) else (52.0 if is_el else 38.0)
 		draw_rect(Rect2(e["pos"].x - bar_w * 0.5, e["pos"].y - 28, bar_w, 5), Color(0.2, 0.2, 0.2))
 		draw_rect(Rect2(e["pos"].x - bar_w * 0.5, e["pos"].y - 28, bar_w * hp_pct, 5), Color(1.0, 0.75, 0.15) if is_el else Color(1.0, 0.3, 0.3))
 
@@ -1529,7 +1841,7 @@ func _draw() -> void:
 		var bar_w: float = 76.0
 		var p_gun := _cur_primary()
 		var s_start: float = p_gun["sweet_start"]
-		var s_end: float = minf(0.92, p_gun["sweet_end"] + (0.08 if _has_passive("wide_sweet") else 0.0))
+		var s_end: float = minf(0.92, p_gun["sweet_end"] + forge_sweet_bonus + (0.08 if _has_passive("wide_sweet") else 0.0))
 		draw_rect(Rect2(bar_pos.x, bar_pos.y, bar_w, 8), Color(0.12, 0.13, 0.16))
 		draw_rect(Rect2(bar_pos.x + bar_w * s_start, bar_pos.y, bar_w * (s_end - s_start), 8), Color(1.0, 0.88, 0.15) if not reload_jammed else Color(0.65, 0.25, 0.25))
 		var cursor_x := bar_pos.x + bar_w * clampf(reload_progress, 0.0, 1.0)
@@ -1581,8 +1893,15 @@ func _draw_hud(font: Font) -> void:
 
 	# Top-Right Dynamic Room Objective Tracker!
 	var obj_str := ""
-	if room_cleared:
-		obj_str = "✅ 房间已清空! 请选择出口大门 ([F]可押注25⚡)"
+	if room_objective == "SHIP_HUB":
+		obj_str = "🛸【讨薪号飞船靶场】打木桩试枪 | 走向上方按[E]空投下洞 ([N]直达黑市/铁匠铺 | [B]直达Boss战)"
+	elif room_objective == "PIT_STOP_SHOP":
+		obj_str = "🛠️【整备站】按数字键 [4]/[5]/[6] 选择黑市盲盒或铁匠铺调校，选完走大门继续!"
+	elif room_objective == "BOSS_FIGHT" and not room_cleared:
+		var hitless_badge := "★无伤大师核心合格" if boss_hitless_valid else "❌无伤已破"
+		obj_str = "👑【首领战】考勤主脑·铁算盘 (%s | 可优先打爆左右肩部位!)" % hitless_badge
+	elif room_cleared:
+		obj_str = "✅ 房间已清空! 请选择出口大门 ([F]可押注25⚡ | [N]进整备站 | [B]打Boss)"
 	elif room_objective == "SABOTAGE_BEACONS":
 		var b_alive: int = 0
 		for bc in beacons:
@@ -1596,8 +1915,8 @@ func _draw_hud(font: Font) -> void:
 		for e in enemies:
 			if e["hp"] > 0.0:
 				e_alive += 1
-		obj_str = "👾 任务【歼灭战】: 剩余敌军 %d (含1名精英督察)" % e_alive
-	draw_string(font, Vector2(810, 25), obj_str, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(1.0, 0.88, 0.25) if not room_cleared else Color(0.3, 1.0, 0.75))
+		obj_str = "👾 %s | 歼灭剩余: %d" % [room_footprint_name, e_alive]
+	draw_string(font, Vector2(805, 25), obj_str, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(1.0, 0.88, 0.25) if not room_cleared else Color(0.3, 1.0, 0.75))
 
 	var buff_str := (" | ★专属Buff激活(%.1fs): %s" % [perfect_reload_buff_timer, _cur_primary()["sig_buff"]]) if perfect_reload_buff_timer > 0.0 else ""
 	draw_string(font, Vector2(18, 50), "【军械3槽】(按Z/X/1-3随时切换体验) -> 左键:%s (弹匣:%d/%d) | 右键:%s | 核心:%s%s" % [_cur_primary()["name"], ammo, _cur_primary()["mag_size"], _cur_heavy()["name"], _cur_dynamo()["name"], buff_str], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.88, 0.94, 1.0))
@@ -1611,4 +1930,4 @@ func _draw_hud(font: Font) -> void:
 	draw_rect(Rect2(0, 654, 1280, 66), Color(0.05, 0.06, 0.08, 0.95))
 	if current_event_popup != "":
 		draw_string(font, Vector2(18, 678), "📢 房间事件与掉落: " + current_event_popup, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(1.0, 0.88, 0.35))
-	draw_string(font, Vector2(18, 704), "键位：[WASD]移动 | [空格]翻滚擦弹(+10⚡) | [左键]主枪(尾弹顿帧击退) | [右键]瞬发重火器(带射手后坐滑步!) | [R]抓黄区换弹(+8⚡&专属Buff) | [E]升盾桩/偷电箱/进门 | [F]门前押注25⚡ | [Z/X/1-3]切枪与核心", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.82, 0.88, 0.96))
+	draw_string(font, Vector2(18, 704), "键位：[WASD]移动 [空格]翻滚擦弹 [左键]主枪 [右键]重火器 [R]完美换弹 [Q]道具 [E]机关/进门 [F]门前押注 | 快捷测试：[H]回飞船靶场 [N]进黑市铁匠铺(按4/5/6选牌) [B]挑战多部位Boss [Z/X/1-3]切枪", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.82, 0.88, 0.96))
