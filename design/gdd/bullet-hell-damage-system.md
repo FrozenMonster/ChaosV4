@@ -21,7 +21,7 @@ Pre-allocated 800-slot object-pooled projectile engine (`BulletPool`), discrete 
 2. **3-Tier Ballistic Impact & Recoil Matrix (三级枪械打击感与物理后坐力阶梯)**: Every shot tier has unmistakable physical weight:
    - **Tier A — Standard Primary Shots (`LMB`)**: Crisp `6px` gun-sprite kick, `5°` muzzle rise, spinning brass shell ejection, and zero player movement displacement so dodging stays surgical.
    - **Tier B — Primary Final Round (`LMB` Mag = 1)**: Audible chambering click + amber muzzle glow before firing; on impact, triggers a **`0.03s` meaty hitstop**, **`28.0 px` enemy knockback**, **`0.25s` enemy attack-timer stagger**, and an enlarged golden critical popup.
-   - **Tier C — Heavy Spender Weapons (`RMB` `30 / 50 / 90⚡`)**: Unleashing a heavy weapon physically pushes the **player character backward in a safe `0.08s` recoil slide (`8.0 px` Light / `16.0 px` Medium Railgun / `22.0 px` Ultimate Black Hole)** with dust puffs and `0.80x -> 1.15x` squash-and-stretch, paired with `0.045s–0.06s` heavy hitstop, `45.0 px` enemy knockback, and directional high-velocity debris scattering on kill.
+   - **Tier C — Heavy Spender Weapons (`RMB` `45 / 65 / 90⚡`)**: Unleashing a heavy weapon physically pushes the **player character backward in a safe `0.08s` recoil slide (`8.0 px` Light / `16.0 px` Medium Railgun / `22.0 px` Ultimate Black Hole)** with dust puffs and `0.80x -> 1.15x` squash-and-stretch, paired with `0.045s–0.06s` heavy hitstop, `45.0 px` enemy knockback, and directional high-velocity debris scattering on kill.
 
 ## Detailed Design
 
@@ -43,7 +43,7 @@ Pre-allocated 800-slot object-pooled projectile engine (`BulletPool`), discrete 
 | :--- | :--- | :--- | :--- |
 | **1. Standard Primary (`LMB`)**<br>*(常规轻武器射击)* | • **Shooter Slide**: `0.0 px` (never disturbs dodging)<br>• **Gun Sprite Kick**: `6.0 px` back, `5°` muzzle flip<br>• **Shell Casing**: Standard brass casing ejected at `95–135°` | • **Camera Kick**: `2.0 px` micro-nudge<br>• **Hitstop**: `0.0s` (continuous flow) | • **Hit-Flash**: `0.06s` pure `#FFFFFF`<br>• **Knockback**: `4.0 px` micro-jitter<br>• **Popup**: Standard white `-DMG` |
 | **2. Primary Final Round (`LMB` Mag=1)**<br>*(轻武器尾弹重击)* | • **Pre-Fire Cue**: Metallic chamber click + amber muzzle ring when `ammo == 1`<br>• **Shooter Slide**: `4.0 px` crisp snap<br>• **Gun Sprite Kick**: `12.0 px` back, `18°` rise + 2x Golden Muzzle Cross-Blast + glowing hot casing | • **Camera Kick**: `6.5 px` directional kick opposite aim<br>• **Hitstop**: **`0.03s` (`30ms`)** tactile impact freeze | • **Hit-Flash**: `0.10s` `#FFFFFF` -> `#FFB800` gold tint<br>• **Knockback**: **`28.0 px` impulse** along bullet vector<br>• **Stagger**: **`+0.25s` delay** added to enemy `fire_cd`<br>• **Popup**: `1.35x` scaled Gold **`★尾弹暴击!`** |
-| **3. Heavy Spender (`RMB` 30/50/90⚡)**<br>*(右键重火器轰击)* | • **Shooter Physical Recoil Slide**: Pushes player opposite `aim_dir` over `0.08s`:<br>  - Light (`30⚡` Swarm): **`8.0 px`** slide<br>  - Medium (`50⚡` Railgun): **`16.0 px`** slide<br>  - Ultimate (`90⚡` Black Hole): **`22.0 px`** slide<br>• **Body Squash**: `0.80x × 1.18x` spring + foot dust ring | • **Camera Kick**: **`12.0–18.0 px`** directional punch + `1.03x` zoom pulse<br>• **Hitstop**: **`0.045s–0.055s`** heavy freeze | • **Hit-Flash**: `0.14s` electric cyan/violet flash<br>• **Knockback**: **`45.0 px` heavy slam** (or continuous vortex pull for Black Hole)<br>• **Stagger**: **`+0.45s` delay** (or instant Weak-Point Interrupt on Elites/Bosses)<br>• **Kill Ragdoll Debris**: 12 metal parts blasted in a `45°` cone along `aim_dir` at `220–340 px/s` |
+| **3. Heavy Spender (`RMB` 45/65/90⚡)**<br>*(右键重火器轰击)* | • **Shooter Physical Recoil Slide**: Pushes player opposite `aim_dir` over `0.08s`:<br>  - Light (`45⚡` Swarm): **`8.0 px`** slide<br>  - Medium (`65⚡` Railgun): **`16.0 px`** slide<br>  - Ultimate (`90⚡` Black Hole): **`22.0 px`** slide<br>• **Body Squash**: `0.80x × 1.18x` spring + foot dust ring | • **Camera Kick**: **`12.0–18.0 px`** directional punch + `1.03x` zoom pulse<br>• **Hitstop**: **`0.045s–0.055s`** heavy freeze | • **Hit-Flash**: `0.14s` electric cyan/violet flash<br>• **Knockback**: **`45.0 px` heavy slam** (or continuous vortex pull for Black Hole)<br>• **Stagger**: **`+0.45s` delay** (or instant Weak-Point Interrupt on Elites/Bosses)<br>• **Kill Ragdoll Debris**: 12 metal parts blasted in a `45°` cone along `aim_dir` at `220–340 px/s` |
 
    - **Safe Shooter Recoil Rule**: The `8.0–22.0 px` shooter recoil slide on `RMB` Heavy Weapons clamps cleanly against arena walls and deployed shields and **never** pushes the player into out-of-bounds hazards or overrides active `Space` dodge-roll I-frames.
 4. **Discrete Player Survival, Overcharge Aegis Shield (3-Pip Active Recharge) & Shield-Piercing Attacks**:
@@ -124,7 +124,7 @@ To make Final Rounds and Heavy Weapons feel physically devastating, enemy knockb
 | `enemy_knockback_resistance` | float | `0.0–0.85` | data file | Archetype resistance (`0.0` for Burst Bot, `0.4` for Elites, `0.85` for Bosses) |
 
 **Output Range:** `0.6 px` to `45.0 px` displacement along projectile direction over `0.10s`.
-**Example:** Hitting a Burst Bot (`enemy_knockback_resistance = 0.0`) with a **Final Round** (`tier = 2`) knocks it back `28.0 * (1.0 - 0.0) = 28.0 px` and delays its next attack by `0.25s`. Hitting it with the `50⚡` Railgun (`tier = 3`) slams it back `45.0 px`.
+**Example:** Hitting a Burst Bot (`enemy_knockback_resistance = 0.0`) with a **Final Round** (`tier = 2`) knocks it back `28.0 * (1.0 - 0.0) = 28.0 px` and delays its next attack by `0.25s`. Hitting it with the `65⚡` Railgun (`tier = 3`) slams it back `45.0 px`.
 
 ---
 
@@ -144,7 +144,7 @@ When the player fires a Final Round or `RMB` Heavy Spender, the backward physica
 | `is_dodging` | bool | `true/false` | calculated | Suppresses recoil slide if the player is currently mid-dodge roll |
 
 **Output Range:** `0.0 px` (standard shot or mid-dodge) to `22.0 px` (Ultimate `90⚡` Heavy shot), clamped safely against walls and cover.
-**Example:** Player fires the `50⚡` Superconductor Railgun (`heavy_cost = 50.0`, `is_heavy_shot = true`, `is_dodging = false`). The player slides backward `16.0 px` opposite `aim_dir` over `0.08s` with foot-dust particles and a `15.0 px` directional camera kick.
+**Example:** Player fires the `65⚡` Superconductor Railgun (`heavy_cost = 65.0`, `is_heavy_shot = true`, `is_dodging = false`). The player slides backward `16.0 px` opposite `aim_dir` over `0.08s` with foot-dust particles and a `15.0 px` directional camera kick.
 
 ## Edge Cases
 
@@ -202,7 +202,7 @@ When the player fires a Final Round or `RMB` Heavy Spender, the backward physica
 
 - **GIVEN** 500 enemy projectiles and 150 player projectiles are active simultaneously in `BulletPool`, **WHEN** updated over 300 consecutive frames, **THEN** `0` runtime node `instantiate()` or `queue_free()` calls occur and frame time remains `<= 16.67ms` (`60+ FPS`).
 - **GIVEN** the player fires a Primary **Final Round** (`tier = 2`) that hits a Burst Bot (`enemy_knockback_resistance = 0.0`), **WHEN** impact resolves, **THEN** `hitstop_timer` is set to `0.03s`, the enemy is knocked back `28.0 px` along the projectile vector, and the enemy's `fire_cd` is delayed by `+0.25s`.
-- **GIVEN** the player fires a `50⚡` Medium or `90⚡` Ultimate `RMB` Heavy Weapon while not dodging, **WHEN** the shot unleashes, **THEN** the player character slides backward `16.0 px` (`50⚡`) or `22.0 px` (`90⚡`) opposite `aim_dir` over `0.08s` without clipping through arena walls or cover.
+- **GIVEN** the player fires a `65⚡` Medium or `90⚡` Ultimate `RMB` Heavy Weapon while not dodging, **WHEN** the shot unleashes, **THEN** the player character slides backward `16.0 px` (`65⚡`) or `22.0 px` (`90⚡`) opposite `aim_dir` over `0.08s` without clipping through arena walls or cover.
 - **GIVEN** the player has `aegis_shield = 1` (`0/3` Pips) and `hp = 6`, **WHEN** hit by a standard enemy projectile (`is_shield_piercing == false`), **THEN** `aegis_shield` becomes `0`, `hp` remains `6` (preserving Boss Hitless eligibility), enemy bullets within `90.0 px` are cleared, and `aegis_shield` remains `0` across room transitions until the player earns `3/3` Aegis Charge Pips via Heavy casts, Interrupts, or 3x Perfect Reloads.
 - **GIVEN** the player has `aegis_shield = 1` and `hp = 6`, **WHEN** hit by an un-interrupted Elite/Boss signature attack flagged `is_shield_piercing == true`, **THEN** the attack bypasses `aegis_shield` (`aegis_shield` remains `1`), deducts `-1` directly from `hp` (`hp` becomes `5`), and voids Boss Hitless eligibility.
 

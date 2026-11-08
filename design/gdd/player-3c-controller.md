@@ -8,7 +8,7 @@
 
 ## Summary
 
-Defines the sacrosanct top-down 3C movement controller (`290.0 px/s` zero-inertia 8-way movement + 360° aiming), committed `Space` dodge-roll with front-loaded I-frames (`0.28s`), outer Graze absorption ring (`42.0 px` radius yielding `+20⚡` Overcharge per bullet grazed), and the unified data-driven **Tactical Arena Interactables** system supporting both **Proximity (`[E]`)** and **Ranged Hit-Trigger** objects with customizable combat effects.
+Defines the sacrosanct top-down 3C movement controller (`290.0 px/s` zero-inertia 8-way movement + 360° aiming), committed `Space` dodge-roll with front-loaded I-frames (`0.28s`), outer Graze absorption ring (`42.0 px` radius yielding `+10.0⚡` Overcharge per bullet grazed, up to `+20.0⚡` base per roll), and the unified data-driven **Tactical Arena Interactables** system supporting both **Proximity (`[E]`)** and **Ranged Hit-Trigger** objects with customizable combat effects.
 
 > **Quick reference** — Layer: `Foundation` · Priority: `MVP` · Key deps: `Combat Event Bus & Data Schema`
 
@@ -19,7 +19,7 @@ Defines the sacrosanct top-down 3C movement controller (`290.0 px/s` zero-inerti
 **Player 3C, Dodge-Graze & Tactical Arena Interactables** establishes the physical feel and spatial interaction language of **CHAMBER OVERDRIVE (膛室超载)**. Serving **Pillar 1 (Sacrosanct 3C Consistency)**, base movement speed, dodge-roll trajectory, and hurtbox geometry are treated as a sacred contract with the player's muscle memory—no weapon weight, terrain hazard, or item synergy is ever permitted to sluggishly degrade player movement or alter dodge recovery frames.
 
 At the same time, this system turns spatial positioning into an active fuel source for **Pillar 2 (Action Fuels Firepower)** through two original mechanisms:
-1. **Committed Dodge-Roll Grazing (`Space`)**: Rolling through enemy bullet curtains during the front-loaded `0.28s` I-frame window activates an outer electromagnetic **Graze Ring (`42.0 px`)** that siphons kinetic voltage (`+20⚡` Overcharge per bullet, up to 2 per roll) directly into the player's reactor, balanced by a `0.14s` vulnerable landing recovery that rewards smart trajectory choices.
+1. **Committed Dodge-Roll Grazing (`Space`)**: Rolling through enemy bullet curtains during the front-loaded `0.28s` I-frame window activates an outer electromagnetic **Graze Ring (`42.0 px`)** that siphons kinetic voltage (`+10.0⚡` Overcharge per bullet, up to 2 per roll at base or 3 with Exoskeleton Graze Matrix) directly into the player's reactor, balanced by a `0.14s` vulnerable landing recovery that rewards smart trajectory choices.
 2. **Unified Customizable Tactical Arena Interactables (`ArenaInteractableData`)**: Instead of derivative single-purpose props, arena objects share a unified data-driven framework categorized into **Proximity Interactables (`[E]` key within `40.0 px`)**—such as pop-up hydraulic energy shields, overcharge tap-boxes, and kinetic launchpads—and **Ranged Hit-Trigger Interactables (shot by `LMB`/`RMB` projectiles)**—such as volatile fuel drums, cryo-coolant tanks, and bullet-splitting prism nodes.
 
 ## Detailed Design
@@ -37,18 +37,18 @@ At the same time, this system turns spatial positioning into an active fuel sour
 3. **Committed Dodge-Roll & Graze Siphon (`Space` / Controller South/RB)**:
    - Pressing `Space` initiates a committed **`0.42s` (`DODGE_DURATION`)** roll along the current movement vector (or toward the aim cursor if stationary):
      - **Phase 1 — I-Frame Dash (`0.00s` to `0.28s`, `DODGE_IFRAME_END = 0.28s`)**: Moves at **`DODGE_SPEED = 640.0 px/s`**. The player's hurtbox is 100% invulnerable to enemy projectiles and contact damage, spawning 3 cyan afterimages.
-     - **Graze Trigger (`+20⚡`)**: Any active enemy projectile entering `effective_graze_radius` during Phase 1 that has not yet been grazed (`bullet.grazed == false`) is flagged `grazed = true`, arcs cyan lightning to the player, emits `dodge_graze_triggered`, and grants **`+20.0` Overcharge** (capped at **`MAX_GRAZE_PER_ROLL = 2`**, or `+40.0⚡` maximum per roll).
+     - **Graze Trigger (`+10.0⚡`)**: Any active enemy projectile entering `effective_graze_radius` during Phase 1 that has not yet been grazed (`bullet.grazed == false`) is flagged `grazed = true`, arcs cyan lightning to the player, emits `dodge_graze_triggered`, and grants **`+10.0` Overcharge** (capped at **`MAX_GRAZE_PER_ROLL = 2`** base, or `+20.0⚡` maximum per roll; expandable to `3` via Exoskeleton Forge tuning).
      - **Phase 2 — Commit Recovery (`0.28s` to `0.42s`, `0.14s` window)**: Roll velocity decelerates to **`42%` (`268.8 px/s`)**, I-frames and Graze detection end, and primary/heavy firing remains locked until `0.42s` completes.
 4. **Unified Customizable Tactical Arena Interactables (`ArenaInteractableData`)**:
    - Every interactive arena object is driven by an `ArenaInteractableData` resource specifying `trigger_mode` and a customizable `effect_type` + `effect_params` dictionary:
    - **Category A: Proximity Interactables (`trigger_mode = PROXIMITY_KEY_E`, Interaction Radius `= 40.0 px`)**:
      - Activated by pressing **`[E]`** when within `40.0 px` (prioritized automatically during combat; after room clear, doors take priority if overlapping):
        1. **`DEPLOY_SHIELD_COVER` (液压防爆升盾桩)**: Snaps up a solid `96×36px` alloy-energy barrier (`60.0 HP` durability) that blocks enemy projectiles and vaporizes enemy bullets within a `28.0 px` shock-border on deployment.
-       2. **`OVERCHARGE_CAPACITOR` (违章高压偷电箱)**: Rips open a corporate power junction, instantly granting **`+30.0⚡` Overcharge** to the player and emitting a `110.0 px` stun pulse that interrupts/staggers nearby enemies (1-time use per room).
+       2. **`OVERCHARGE_CAPACITOR` (违章高压偷电箱)**: Rips open a corporate power junction, instantly granting **`+22.0⚡` Overcharge** to the player and emitting a `110.0 px` stun pulse that interrupts/staggers nearby enemies (1-time use per room).
        3. **`KINETIC_LAUNCHPAD` (矿坑电磁弹射板)**: Launches the player `260.0 px` toward the aim direction at `900.0 px/s` with full I-frames, triggering a `90.0 px` landing shockwave (`35.0` damage).
    - **Category B: Ranged Hit-Trigger Interactables (`trigger_mode = RANGED_HIT`, Hitbox Radius `= 22.0 px`)**:
      - Triggered when struck by any player `LMB` primary bullet, `Final Round`, or `RMB` heavy attack:
-       1. **`EXPLOSIVE_BLAST` (高爆燃料罐)**: Detonates immediately (`0.035s` hitstop), dealing **`65.0` AoE damage** within `135.0 px`, clearing enemy bullets in radius, and emitting `interactable_triggered` (triggers *Demolition Dynamo* for `+40.0⚡` if an enemy is hit).
+       1. **`EXPLOSIVE_BLAST` (高爆燃料罐)**: Detonates immediately (`0.035s` hitstop), dealing **`65.0` AoE damage** within `135.0 px`, clearing enemy bullets in radius, and emitting `interactable_triggered` (triggers *Tactical Saboteur Dynamo* for `+22.0⚡` if an enemy is hit).
        2. **`CRYO_SLOW_FIELD` (深冷液氮罐)**: Ruptures into a `140.0 px` sub-zero mist zone lasting **`3.5s`** (`Alpha <= 35%`), reducing enemy movement speed and enemy projectile velocity inside the zone by **`50%`**.
        3. **`PRISM_BULLET_SPLIT` (超导折射棱镜柱)**: Durable crystal node (`5 hits` capacity, `0.20s` internal cooldown); each player shot striking the prism refracts into **5 homing laser splinters** (`22.0` damage each) targeting the nearest enemies.
    - **Custom Effect Extensibility**: Designers can author new `.tres` interactables by combining any `trigger_mode` (`PROXIMITY_KEY_E` or `RANGED_HIT`) with any `effect_type` payload without modifying player controller code.
@@ -68,7 +68,7 @@ At the same time, this system turns spatial positioning into an active fuel sour
 | :--- | :--- | :--- | :--- |
 | **Combat Event Bus & Data Schema** | Downstream Consumer & Upstream Producer | Emits `dodge_started`, `dodge_graze_triggered`, `interactable_triggered`; reads `ArenaInteractableData` | `Combat Event Bus & Data Schema` |
 | **Pooled Bullet-Hell & Damage System** | Bidirectional | Queries enemy bullet positions for Graze Ring & Hurtbox checks; Ranged Hit-Trigger interactables intercept player bullets and spawn AoE/prism effects | `Pooled Bullet-Hell & Damage System` |
-| **Dual-Gun, Active Reload & Overcharge Engine** | Downstream Consumer | Receives `+20⚡` from `dodge_graze_triggered` and `+30⚡`/`+40⚡` from `interactable_triggered`; Active Reload bar continues ticking during Dodge Roll | `Dual-Gun, Active Reload & Overcharge Engine` |
+| **Dual-Gun, Active Reload & Overcharge Engine** | Downstream Consumer | Receives `+10.0⚡` from `dodge_graze_triggered` and `+22.0⚡` from `interactable_triggered`; Active Reload bar continues ticking during Dodge Roll | `Dual-Gun, Active Reload & Overcharge Engine` |
 | **7-Slot Loadout & Tactical Items System** | Upstream Provider | Supplies passive stat modifiers (`fleet_step` `+12%` speed and `+25%` Graze radius) | `7-Slot Loadout & Tactical Items System` |
 
 ## Formulas
@@ -108,11 +108,11 @@ When an enemy bullet intersects the player's Graze Ring during a Dodge Roll, the
 | `CHARGE_DODGE_GRAZE` | float | `10.0` | data file | Base Tier-1 Overcharge energy awarded per grazed enemy projectile (calibrated for `72–100⚡` room budget; max `+20.0⚡` per roll) |
 | `dodge_timer` | float | `0.0–0.42` | calculated | Elapsed time in the current dodge roll |
 | `bullet_already_grazed` | bool | `true/false` | calculated | Per-bullet flag ensuring one projectile cannot be grazed multiple times |
-| `roll_graze_count` | int | `0–2` | calculated | Number of bullets already grazed during the current `Space` roll |
-| `MAX_GRAZE_PER_ROLL` | int | `2` | data file | Maximum graze payouts permitted in a single dodge roll (`+40.0⚡` cap) |
+| `roll_graze_count` | int | `0–3` | calculated | Number of bullets already grazed during the current `Space` roll |
+| `MAX_GRAZE_PER_ROLL` | int | `2` (up to `3` via Forge) | data file | Maximum graze payouts permitted in a single dodge roll (`+20.0⚡` base cap) |
 
-**Output Range:** `0.0` or `20.0` per bullet event, up to `40.0` total Overcharge per `Space` roll.
-**Example:** Player rolls through a 5-bullet enemy ring at `dodge_timer = 0.12s`. Bullet #1 and Bullet #2 yield `20.0⚡` each (`roll_graze_count` reaches `2`, total `+40.0⚡`). Bullets #3–#5 evaluate `int(2 < 2) = 0`, yielding `0.0⚡` while the player still passes safely through all 5 bullets via I-frames.
+**Output Range:** `0.0` or `10.0` per bullet event, up to `20.0` (`30.0` with Forge Exoskeleton) total Overcharge per `Space` roll.
+**Example:** Player rolls through a 5-bullet enemy ring at `dodge_timer = 0.12s`. Bullet #1 and Bullet #2 yield `10.0⚡` each (`roll_graze_count` reaches `2`, total `+20.0⚡`). Bullets #3–#5 evaluate `int(2 < 2) = 0`, yielding `0.0⚡` while the player still passes safely through all 5 bullets via I-frames.
 
 ## Edge Cases
 
@@ -128,7 +128,7 @@ When an enemy bullet intersects the player's Graze Ring during a Dodge Roll, the
 | :--- | :--- | :--- | :--- |
 | **Combat Event Bus & Data Schema** | Depends on (Upstream) | Hard | Emits `dodge_started`, `dodge_graze_triggered`, `interactable_triggered`; loads `ArenaInteractableData` |
 | **Pooled Bullet-Hell & Damage System** | Depended on by (Downstream) | Hard | Provides `player_pos`, `in_iframes`, `effective_graze_radius`, and deployed cover/hazard collision shapes |
-| **Dual-Gun, Active Reload & Overcharge Engine** | Depended on by (Downstream) | Hard | Consumes Graze (`+20⚡`) and Capacitor/Hazard Overcharge bursts |
+| **Dual-Gun, Active Reload & Overcharge Engine** | Depended on by (Downstream) | Hard | Consumes Graze (`+10.0⚡`) and Capacitor/Hazard Overcharge bursts (`+22.0⚡`) |
 | **Tactical Micro-HUD & Screen UI System** | Depended on by (Downstream) | Hard | Renders the `42–52.5 px` cyan Graze Ring around `player_pos` and `[E]` interactable prompts |
 
 ## Visual/Audio Requirements
@@ -150,7 +150,7 @@ When an enemy bullet intersects the player's Graze Ring during a Dodge Roll, the
 ## Game Feel
 
 - **Instant Input Snappiness**: `0ms` input inertia on `WASD` direction changes; `Space` dodge roll responds on the exact frame pressed.
-- **Graze Dopamine**: Grazing an enemy bullet triggers a crisp micro-flash on the outer ring, an ascending electric zip sound, and a floating `+20⚡` callout, making close-quarters bullet weaving feel exhilarating rather than terrifying.
+- **Graze Dopamine**: Grazing an enemy bullet triggers a crisp micro-flash on the outer ring, an ascending electric zip sound, and a floating `+10⚡` callout, making close-quarters bullet weaving feel exhilarating rather than terrifying.
 - **Tactical Arena Mastery**: Shooting a `PRISM_BULLET_SPLIT` node to split a Final Round into 5 homing beams or tapping `[E]` on a `DEPLOY_SHIELD_COVER` pylon to block a sniper shot gives players creative spatial outplays in every room.
 
 ## UI Requirements
@@ -172,7 +172,7 @@ When an enemy bullet intersects the player's Graze Ring during a Dodge Roll, the
 *(Note: `qa-lead` consulted to ensure all criteria are independently testable.)*
 
 - **GIVEN** the player is in `NORMAL_SKIRMISH` with no speed passives, **WHEN** directional input is applied or stacks with any Passive Relic, **THEN** movement speed equals `290.0 px/s` at base and never exceeds `333.5 px/s` (`+15%` cap) or drops below `290.0 px/s`.
-- **GIVEN** the player presses `Space` to dodge roll through 4 active enemy bullets, **WHEN** `0.00s <= dodge_timer <= 0.28s`, **THEN** the player takes `0` damage, `dodge_graze_triggered` fires for the first `2` bullets granting `+40.0⚡` total Overcharge, and bullets #3–#4 grant `0.0⚡` (`MAX_GRAZE_PER_ROLL == 2`).
+- **GIVEN** the player presses `Space` to dodge roll through 4 active enemy bullets, **WHEN** `0.00s <= dodge_timer <= 0.28s`, **THEN** the player takes `0` damage, `dodge_graze_triggered` fires for the first `2` bullets granting `+20.0⚡` total Overcharge (`+10.0⚡` each), and bullets #3–#4 grant `0.0⚡` (`MAX_GRAZE_PER_ROLL == 2`).
 - **GIVEN** the player is in `DODGE_RECOVERY` (`0.28s < dodge_timer < 0.42s`), **WHEN** an enemy projectile intersects `PLAYER_HURTBOX_RADIUS` (`14.0 px`), **THEN** the player is vulnerable and takes normal hit damage.
 - **GIVEN** an `ArenaInteractableData` configured with `trigger_mode = PROXIMITY_KEY_E` and `effect_type = DEPLOY_SHIELD_COVER`, **WHEN** the player presses `[E]` within `40.0 px`, **THEN** the shield barrier activates (`60.0 HP`), clears enemy bullets within `28.0 px`, and blocks subsequent enemy projectiles until its durability reaches `0.0`.
 - **GIVEN** an `ArenaInteractableData` configured with `trigger_mode = RANGED_HIT` and `effect_type = CRYO_SLOW_FIELD`, **WHEN** struck by a player projectile, **THEN** it spawns a `140.0 px` zone for `3.5s` (`Alpha <= 0.35`) that reduces enemy and enemy-bullet speed inside it by `50%`.

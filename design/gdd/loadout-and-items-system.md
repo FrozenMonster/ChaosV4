@@ -122,12 +122,13 @@ When an outgoing Armory piece, Active Item, or excess Passive Relic is recycled 
 **Variables:**
 | Variable | Type | Range | Source | Description |
 |----------|------|-------|--------|-------------|
-| `base_salvage_chips` | int | `20–25` | data file | Base salvage value (`20 🪙` for Passive Relics, `25 🪙` for Primary/Heavy/Dynamo/Active items) |
+| `base_salvage_chips` | int | `15–65` | data file | Base salvage value by `rarity_tier` (`15 🪙` Common, `25 🪙` Rare, `40 🪙` Epic, `65 🪙` Legendary) |
 | `MAGNET_SALVAGE_BONUS` | float | `0.50` | data file | `+50%` salvage bonus granted by *Bounty Audit Magnet* (`bounty_audit_magnet`) |
 | `has_bounty_audit_magnet` | bool | `true/false` | calculated | True if `bounty_audit_magnet` is currently in `Slot_Passives[0..2]` (including if it is the item being swapped out) |
 
 **Output Range:** `20` to `38` Bounty Chips per salvaged item.
-**Example:** Player has 3 Passives equipped (including `bounty_audit_magnet`) and presses `[8]` to swap slot 1 for a newly dropped Relic. `salvage_chip_payout = round(20 * (1.0 + 0.50 * 1)) = 30 🪙 Bounty Chips`.
+- **`base_salvage_chips`**: Rarity-scaled salvage value (`15 🪙` Common, `25 🪙` Rare, `40 🪙` Epic, `65 🪙` Legendary)
+- **Example:** Player has 3 Passives equipped (including `bounty_audit_magnet`) and presses `[8]` to swap slot 1 (a `RARE` Relic worth `25 🪙`) for a newly dropped Relic. `salvage_chip_payout = round(25 * (1.0 + 0.50 * 1)) = 38 🪙 Bounty Chips`.
 
 ## Edge Cases
 

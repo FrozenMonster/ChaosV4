@@ -135,7 +135,7 @@ To prevent multi-hit frames (such as a barrel exploding on 6 enemies at the exac
 
 - **If a Passive Relic unsubscribes or is swapped via `[7]/[8]/[9]` mid-dispatch**: The Event Bus iterates over a shallow snapshot copy of the listener array so removing or swapping a relic during an active frame never causes a skipped index or invalid iterator crash.
 - **If `current_recursion_depth` reaches `MAX_RECURSION_DEPTH` (`2`)**: The Event Bus still processes Stage 1 damage/kill state and Stage 4 UI/audio notifications, but suppresses Stage 2 relic/dynamo secondary spawns so enemies still die properly without hanging the game.
-- **If a `.tres` Resource file fails validation (e.g., `sweet_spot_end <= sweet_spot_start` or `overcharge_cost <= 0.0`)**: The data loader logs a structured warning on startup and clamps the invalid field to safe fallback constants (`sweet_spot_start = 0.42`, `sweet_spot_end = 0.64`, `overcharge_cost = 30.0`) so a typo in data never crashes a run.
+- **If a `.tres` Resource file fails validation (e.g., `sweet_spot_end <= sweet_spot_start` or `overcharge_cost <= 0.0`)**: The data loader logs a structured warning on startup and clamps the invalid field to safe fallback constants (`sweet_spot_start = 0.42`, `sweet_spot_end = 0.62`, `overcharge_cost = 45.0`) so a typo in data never crashes a run.
 - **If `room_cleared` fires on the exact same frame the player takes fatal damage**: Damage resolution (`Priority 100`) executes before `room_cleared` (`Priority 300`); if player HP reaches `0`, `room_cleared` and door spawning are aborted in favor of the Defeat/Emergency Warp sequence.
 
 ## Dependencies
