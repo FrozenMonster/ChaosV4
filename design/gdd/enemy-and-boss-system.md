@@ -62,9 +62,10 @@ Establishes a **3-Tier Enemy & Granular Boss Customization Architecture**: (1) D
    - During any active `0.85s` (`0.75s` in Boss P2/P3) Weak-Point Interrupt window on an Elite or Boss:
      - **Valid Interrupt Triggers**: (a) Any Primary **Final Round** hit, (b) Any **`RMB` Heavy Spender** hit, (c) Any **Tactical Arena Interactable** blast/shock, or (d) Accumulating **`>= 45.0` burst damage** within the window.
      - **Payoff**: Cancels the Elite/Boss attack, triggers a `0.045s` hitstop, emits `weakpoint_interrupted`, grants **`+22.0⚡` Overcharge**, and applies **`VULNERABLE_STAGGER` (`1.8s` stun + `+30%` incoming damage taken)**.
-5. **Boss DPS Soft-Cap & Hitless "Master Chamber Core" Reward**:
+5. **Boss DPS Soft-Cap, Shield-Piercing Signature Unleash & Hitless "Master Chamber Core" Reward**:
+   - **Shield-Piercing Signature Attacks (`is_shield_piercing = true`)**: Whenever an Elite or Boss completes its `0.85s` `WEAKPOINT_WINDUP` **without being interrupted**, the resulting `SIGNATURE_UNLEASH` attack is flagged `is_shield_piercing = true` (rendered with a jagged crimson-violet electric border). Unlike standard Boss bullets (which can be safely absorbed by the player's **Overcharge Aegis Shield (`🛡️`)** without losing Hitless status), an un-interrupted `SIGNATURE_UNLEASH` **pierces directly through the Aegis Shield to damage Red Heart `hp`**!
    - **Boss DPS Soft-Cap**: If player damage dealt to a Boss within a rolling `1.0s` window exceeds **`18%` of Boss `max_hp`**, excess damage in that window is multiplied by **`0.35` (`35%`)**—*except* direct Weak-Point Interrupt hits and `BossPartNode` break bursts, which bypass the soft-cap at `100%` value to reward skillful play.
-   - **Hitless Master Chamber Core (无伤首领奖励「大师膛室核心」)**: Defeating any Stratum Boss without losing a single point of `hp` or `armor` during the encounter awards a **Master Chamber Core (`+1 Max HP Heart` restored + `+15.0⚡ Max Overcharge Capacity`)**.
+   - **Hitless Master Chamber Core (无伤首领奖励「大师膛室核心」)**: Defeating any Stratum Boss **without losing any Red Heart `hp`** (absorbing a normal bullet with `Overcharge Aegis Shield` is allowed and preserves Hitless eligibility, whereas taking a `SHIELD_PIERCING` hit or losing `hp` voids it) awards a **Master Chamber Core (`+1 Max HP Heart` restored + `+15.0⚡ Max Overcharge Capacity`)**.
 
 ### States and Transitions
 
@@ -185,7 +186,7 @@ To prevent degenerate build combinations from one-shotting Bosses while still re
 - **GIVEN** an Elite with `DirectionalShieldComponent` or a Boss in `WEAKPOINT_WINDUP` (`0.85s` window), **WHEN** struck by a Primary Final Round, an `RMB` Heavy Weapon, or `>= 45.0` burst damage, **THEN** the attack is canceled, `weakpoint_interrupted` fires granting `+22.0⚡` Overcharge, and the Elite/Boss enters `VULNERABLE_STAGGER` (`1.8s` stun, `1.30x` damage taken).
 - **GIVEN** a Boss with a destructible `BossPartNode` (*Left Missile Pod*, `350 HP`), **WHEN** the part's HP is reduced to `0.0`, **THEN** the missile pod attack timeline is permanently disabled for the rest of the encounter and the Boss immediately suffers a `+22.0⚡` Part-Break Interrupt.
 - **GIVEN** a Boss with `2000 Max HP` (`18%` DPS soft-cap = `360 DMG/s`), **WHEN** the player deals `400 DMG` within `0.5s`, **THEN** subsequent standard shots within that `1.0s` window are attenuated to `35%` damage, whereas a Weak-Point Interrupt hit deals `100%` un-attenuated damage.
-- **GIVEN** the player defeats a Stratum Boss while taking `0` Armor or HP damage during the room, **WHEN** the Boss dies, **THEN** a **Master Chamber Core** spawns granting `+1 Max HP Heart` and `+15.0⚡ Max Overcharge`.
+- **GIVEN** the player defeats a Stratum Boss while losing `0` Red Heart `hp` (even if `aegis_shield` absorbed a standard `is_shield_piercing == false` projectile), **WHEN** the Boss dies, **THEN** a **Master Chamber Core** spawns granting `+1 Max HP Heart` and `+15.0⚡ Max Overcharge`; whereas if hit by an un-interrupted `is_shield_piercing == true` signature attack that deducts `hp`, the Master Chamber Core does not spawn.
 
 ## Open Questions
 
