@@ -103,7 +103,7 @@ It combines *Enter the Gungeon*'s tight dodge-roll and table-flipping bullet-hel
 ### Moment-to-Moment (30 seconds)
 1. **Skirmish & Harvest Overcharge**: Move and fire with your handcrafted Primary Weapon while reading enemy bullet patterns. Generate Overcharge energy via your active **Dynamo Core**—dodging through bullets (Graze), hitting Perfect Reloads, interrupting red-flash enemy wind-ups, detonating arena hazards, or triggering elemental reactions.
 2. **Final Round & Active Reload Combo**: Fire the last bullet in your clip to trigger your **Final Round** modifier, then tap `R` inside the overhead slider's sweet spot for a **Perfect Reload** (0.15s instant reload + bonus Overcharge + `OnPerfectReload` relic proc).
-3. **Swap & Unleash Heavy Spender**: When the Overcharge gauge hits threshold, quick-swap (`Q` / Right Bumper) to your **Overcharge Heavy Weapon** to obliterate priority targets or detonate marks applied by your primary gun, then snap back to your primary.
+3. **DirectUnleash Heavy Spender (RMB)**: When the Overcharge gauge hits threshold, press **Right Mouse Button (`RMB`)** to fire your **Overcharge Heavy Weapon** directly without awkward weapon-swap downtime, while **`Space`** executes your Dodge Roll, **`Q`** triggers your Active Item, **`E`** flips cover tables / enters doors, and **`R`** performs Active Reload.
 
 ### Short-Term (5-15 minutes — Biome Progression, Loadout Slots & 3 Door Categories)
 1. **Strict 7-Slot Player Loadout Schema (Prevents Visual Clutter & Balance Bloat)**:

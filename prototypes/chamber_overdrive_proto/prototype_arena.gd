@@ -45,7 +45,7 @@ var dodge_grazed_count: int = 0
 # --- Loadout Schema (1 Primary + 1 Heavy + 1 Dynamo Core | 1 Active + Max 3 Passives) ---
 var primary_weapons: Array[Dictionary] = [
 	{
-		"name": "Peacemaker Revolver",
+		"name": "维和者左轮",
 		"mag_size": 6,
 		"fire_interval": 0.20,
 		"damage": 18.0,
@@ -53,10 +53,10 @@ var primary_weapons: Array[Dictionary] = [
 		"reload_time": 1.15,
 		"sweet_start": 0.42,
 		"sweet_end": 0.64,
-		"final_round_desc": "Final Round: 2.5x Piercing High-Explosive Slug"
+		"final_round_desc": "尾弹：2.5倍伤害穿透高爆弹"
 	},
 	{
-		"name": "Vector Twin-SMG",
+		"name": "矢量双持冲锋枪",
 		"mag_size": 14,
 		"fire_interval": 0.09,
 		"damage": 9.0,
@@ -64,29 +64,29 @@ var primary_weapons: Array[Dictionary] = [
 		"reload_time": 1.05,
 		"sweet_start": 0.48,
 		"sweet_end": 0.68,
-		"final_round_desc": "Final Round: Triple Shock-Fan Burst"
+		"final_round_desc": "尾弹：三连发扇形电击弹"
 	}
 ]
 var primary_idx: int = 0
 
 var heavy_weapons: Array[Dictionary] = [
 	{
-		"name": "Swarm Micro-Missiles [Light]",
+		"name": "蜂群微型导弹 [轻型]",
 		"cost": 30.0,
 		"type": "swarm",
-		"desc": "Cost 30: Fires 5 homing missiles"
+		"desc": "消耗30⚡：发射5枚自动追踪导弹"
 	},
 	{
-		"name": "Railgun Piercer [Medium]",
+		"name": "超导电磁轨道炮 [中型]",
 		"cost": 50.0,
 		"type": "rail",
-		"desc": "Cost 50: Instant hyper-beam piercing all enemies"
+		"desc": "消耗50⚡：瞬发全屏穿透高能激光柱"
 	},
 	{
-		"name": "Singularity Black Hole [Ultimate]",
+		"name": "奇点坍缩黑洞炮 [终极]",
 		"cost": 90.0,
 		"type": "black_hole",
-		"desc": "Cost 90: Pulls enemies & devours enemy bullets for 3.2s"
+		"desc": "消耗90⚡：牵引全场敌人并吞噬弹幕(3.2秒)"
 	}
 ]
 var heavy_idx: int = 0
@@ -95,39 +95,59 @@ var using_heavy: bool = false
 var dynamo_cores: Array[Dictionary] = [
 	{
 		"id": "kill_chain",
-		"name": "Rampage Dynamo (Easy: +12 on Multi-Kill)",
+		"name": "狂暴连杀核心 (简单: 连杀+12⚡)",
 		"bonus": 12.0,
-		"desc": "Kill within 3s of previous kill -> +12 Overcharge"
+		"desc": "3秒内连续击杀敌人 -> +12⚡超载能量"
 	},
 	{
 		"id": "bullet_shatter",
-		"name": "Aegis Shatter Dynamo (Med: +28 on 3+ Bullets Cleared)",
+		"name": "神盾碎弹核心 (中等: 消弹+28⚡)",
 		"bonus": 28.0,
-		"desc": "Clear >=3 enemy bullets with Perfect Reload / Blank -> +28 Overcharge"
+		"desc": "完美换弹/EMP单次消除>=3颗子弹 -> +28⚡"
 	},
 	{
 		"id": "barrel_kick",
-		"name": "Demolition Dynamo (Hard: +40 on Hazard Kill/Hit)",
+		"name": "爆破轰击核心 (高难: 炸桶+40⚡)",
 		"bonus": 40.0,
-		"desc": "Detonate explosive barrel on enemy -> +40 Overcharge"
+		"desc": "引爆炸药桶命中敌人 -> +40⚡巨额超载"
 	}
 ]
 var dynamo_idx: int = 0
 var last_kill_time: float = -10.0
 
 var active_item: Dictionary = {
-	"name": "EMP Blank Pulse",
+	"name": "EMP 清弹脉冲",
 	"cooldown": 8.0,
 	"timer": 0.0,
-	"desc": "[Space/Shift or C] Clears nearby bullets & stuns"
+	"desc": "[Q] 清除周围敌方弹幕并震慑敌人"
 }
 
 const PASSIVE_CAP: int = 3
 var passive_items: Array[Dictionary] = [
-	{"id": "shock_reload", "name": "Tesla Mag-Well", "desc": "Perfect Reload zaps nearby enemies & clears close bullets"},
-	{"id": "fleet_step", "name": "Kinetic Boots", "desc": "+12% Move Speed & wider Graze ring"}
+	{"id": "shock_reload", "name": "特斯拉弹匣井", "desc": "完美换弹释放电弧并清除近身弹幕"},
+	{"id": "fleet_step", "name": "动能推进靴", "desc": "+12% 移速并扩大擦弹吸收环"}
 ]
 var pending_passive_offer: Dictionary = {}
+
+# --- 美术贴图、音效与打击动效状态 (Sprites, SFX & Juice VFX) ---
+var zh_font: Font
+var tex_player: Texture2D
+var tex_enemy_burst: Texture2D
+var tex_enemy_ring: Texture2D
+var tex_enemy_sniper: Texture2D
+var tex_gun_revolver: Texture2D
+var tex_gun_smg: Texture2D
+var tex_gun_heavy: Texture2D
+var sfx_players: Dictionary = {}
+
+var shells: Array[Dictionary] = []
+var afterimages: Array[Dictionary] = []
+var shockwaves: Array[Dictionary] = []
+var rail_beams: Array[Dictionary] = []
+var debris_list: Array[Dictionary] = []
+var muzzle_flash_timer: float = 0.0
+var gun_recoil_offset: float = 0.0
+var heavy_flash_timer: float = 0.0
 
 # --- Active Reload & Firing State ---
 var ammo: int = 6
@@ -158,8 +178,70 @@ var elapsed_time: float = 0.0
 
 
 func _ready() -> void:
+	_load_assets_and_audio()
 	ammo = _cur_primary()["mag_size"]
 	_setup_room(1, "armory", false)
+
+
+func _load_assets_and_audio() -> void:
+	var font_file := FontFile.new()
+	if font_file.load_dynamic_font("/System/Library/Fonts/STHeiti Medium.ttc") == OK:
+		var sys_f := SystemFont.new()
+		sys_f.font_names = PackedStringArray(["Apple Color Emoji", "Apple Symbols"])
+		font_file.fallbacks = [sys_f]
+		zh_font = font_file
+	elif font_file.load_dynamic_font("/System/Library/Fonts/Hiragino Sans GB.ttc") == OK:
+		zh_font = font_file
+	else:
+		var sys_font := SystemFont.new()
+		sys_font.font_names = PackedStringArray(["STHeiti", "Hiragino Sans GB", "Heiti SC"])
+		zh_font = sys_font
+
+	tex_player = _load_png_tex("res://prototypes/chamber_overdrive_proto/assets/sprites/player_sheet.png")
+	tex_enemy_burst = _load_png_tex("res://prototypes/chamber_overdrive_proto/assets/sprites/enemy_burst.png")
+	tex_enemy_ring = _load_png_tex("res://prototypes/chamber_overdrive_proto/assets/sprites/enemy_ring.png")
+	tex_enemy_sniper = _load_png_tex("res://prototypes/chamber_overdrive_proto/assets/sprites/enemy_sniper.png")
+	tex_gun_revolver = _load_png_tex("res://prototypes/chamber_overdrive_proto/assets/sprites/gun_revolver.png")
+	tex_gun_smg = _load_png_tex("res://prototypes/chamber_overdrive_proto/assets/sprites/gun_smg.png")
+	tex_gun_heavy = _load_png_tex("res://prototypes/chamber_overdrive_proto/assets/sprites/gun_heavy.png")
+
+	for sfx_name in ["shoot", "final_round", "perfect_reload", "jam", "graze", "heavy_fire", "explosion", "hit"]:
+		var p := AudioStreamPlayer.new()
+		p.stream = _load_wav_stream("res://prototypes/chamber_overdrive_proto/assets/sfx/%s.wav" % sfx_name)
+		p.max_polyphony = 6
+		add_child(p)
+		sfx_players[sfx_name] = p
+
+
+func _load_png_tex(res_path: String) -> Texture2D:
+	var img := Image.new()
+	var abs_p := ProjectSettings.globalize_path(res_path)
+	if img.load(abs_p) == OK:
+		return ImageTexture.create_from_image(img)
+	return null
+
+
+func _load_wav_stream(res_path: String) -> AudioStreamWAV:
+	var abs_p := ProjectSettings.globalize_path(res_path)
+	var f := FileAccess.open(abs_p, FileAccess.READ)
+	if f == null:
+		return null
+	var buf := f.get_buffer(f.get_length())
+	var wav := AudioStreamWAV.new()
+	if buf.size() > 44:
+		wav.data = buf.slice(44)
+	wav.format = AudioStreamWAV.FORMAT_16_BITS
+	wav.mix_rate = 44100
+	wav.stereo = false
+	return wav
+
+
+func _play_sfx(sfx_name: String, pitch_min: float = 0.95, pitch_max: float = 1.05) -> void:
+	if sfx_players.has(sfx_name):
+		var p: AudioStreamPlayer = sfx_players[sfx_name]
+		if p.stream != null:
+			p.pitch_scale = randf_range(pitch_min, pitch_max)
+			p.play()
 
 
 func _cur_primary() -> Dictionary:
@@ -196,6 +278,12 @@ func _process(delta: float) -> void:
 		perfect_reload_buff_timer = maxf(0.0, perfect_reload_buff_timer - delta)
 	if active_item["timer"] > 0.0:
 		active_item["timer"] = maxf(0.0, active_item["timer"] - delta)
+	if muzzle_flash_timer > 0.0:
+		muzzle_flash_timer = maxf(0.0, muzzle_flash_timer - delta)
+	if heavy_flash_timer > 0.0:
+		heavy_flash_timer = maxf(0.0, heavy_flash_timer - delta)
+	if gun_recoil_offset > 0.0:
+		gun_recoil_offset = maxf(0.0, gun_recoil_offset - delta * 45.0)
 
 	_handle_hotkeys()
 	_update_player(delta)
@@ -203,13 +291,38 @@ func _process(delta: float) -> void:
 	_update_enemies(delta)
 	_update_black_holes(delta)
 	_update_bullets(delta)
+	_update_vfx(delta)
 	_update_floating_texts(delta)
 	_check_room_state()
 	queue_redraw()
 
 
+func _update_vfx(delta: float) -> void:
+	for i in range(afterimages.size() - 1, -1, -1):
+		afterimages[i]["timer"] -= delta
+		if afterimages[i]["timer"] <= 0.0:
+			afterimages.remove_at(i)
+	for i in range(shockwaves.size() - 1, -1, -1):
+		shockwaves[i]["timer"] -= delta
+		shockwaves[i]["radius"] = lerpf(shockwaves[i]["radius"], shockwaves[i]["max_r"], delta * 12.0)
+		if shockwaves[i]["timer"] <= 0.0:
+			shockwaves.remove_at(i)
+	for i in range(rail_beams.size() - 1, -1, -1):
+		rail_beams[i]["timer"] -= delta
+		if rail_beams[i]["timer"] <= 0.0:
+			rail_beams.remove_at(i)
+	for s in shells:
+		if s["vel"].length_squared() > 1.0:
+			s["pos"] += s["vel"] * delta
+			s["vel"] = s["vel"].move_toward(Vector2.ZERO, delta * 360.0)
+			s["rot"] += delta * 14.0
+	for d in debris_list:
+		if d["vel"].length_squared() > 1.0:
+			d["pos"] += d["vel"] * delta
+			d["vel"] = d["vel"].move_toward(Vector2.ZERO, delta * 420.0)
+
+
 func _handle_hotkeys() -> void:
-	# Quick prototype switching to test all weapons/dynamos anytime
 	if Input.is_key_pressed(KEY_1):
 		dynamo_idx = 0
 	elif Input.is_key_pressed(KEY_2):
@@ -217,26 +330,22 @@ func _handle_hotkeys() -> void:
 	elif Input.is_key_pressed(KEY_3):
 		dynamo_idx = 2
 
-	if Input.is_action_just_pressed("ui_focus_next") or Input.is_key_pressed(KEY_TAB):
-		pass
-
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		match event.keycode:
+			KEY_SPACE:
+				_try_start_dodge()
 			KEY_Q:
-				using_heavy = not using_heavy
-				_spawn_text(player_pos + Vector2(0, -28), "SWAP -> " + (_cur_heavy()["name"] if using_heavy else _cur_primary()["name"]), Color(0.4, 0.95, 1.0))
+				_trigger_active_item()
 			KEY_Z:
 				primary_idx = (primary_idx + 1) % primary_weapons.size()
 				ammo = _cur_primary()["mag_size"]
 				is_reloading = false
-				_spawn_text(player_pos + Vector2(0, -28), "Primary: " + _cur_primary()["name"], Color.WHITE)
+				_spawn_text(player_pos + Vector2(0, -28), "切换主武器: " + _cur_primary()["name"], Color.WHITE)
 			KEY_X:
 				heavy_idx = (heavy_idx + 1) % heavy_weapons.size()
-				_spawn_text(player_pos + Vector2(0, -28), "Heavy: " + _cur_heavy()["name"], Color(1.0, 0.85, 0.2))
-			KEY_C:
-				_trigger_active_item()
+				_spawn_text(player_pos + Vector2(0, -28), "切换重火器: " + _cur_heavy()["name"], Color(1.0, 0.85, 0.2))
 			KEY_R:
 				_on_reload_pressed()
 			KEY_E:
@@ -251,7 +360,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				_resolve_passive_swap(2)
 	elif event is InputEventMouseButton and event.pressed:
 		if event.button_index == MOUSE_BUTTON_RIGHT:
-			_try_start_dodge()
+			_try_fire_heavy()
 
 
 func _update_player(delta: float) -> void:
@@ -275,6 +384,8 @@ func _update_player(delta: float) -> void:
 		dodge_timer += delta
 		var speed_factor: float = 1.0 if dodge_timer < DODGE_IFRAME_END else 0.42
 		player_vel = dodge_dir * DODGE_SPEED * speed_factor
+		if int(dodge_timer * 60.0) % 2 == 0:
+			afterimages.append({"pos": player_pos, "timer": 0.20})
 		if dodge_timer >= DODGE_DURATION:
 			is_dodging = false
 	else:
@@ -319,13 +430,12 @@ func _update_weapons(delta: float) -> void:
 			is_reloading = false
 			reload_progress = 0.0
 			ammo = p_gun["mag_size"]
-			_spawn_text(player_pos + Vector2(0, -24), "RELOADED", Color(0.8, 0.85, 0.9))
+			_spawn_text(player_pos + Vector2(0, -24), "换弹完成", Color(0.8, 0.85, 0.9))
 
 	if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
-		if using_heavy:
-			_try_fire_heavy()
-		else:
-			_try_fire_primary()
+		_try_fire_primary()
+	if Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
+		_try_fire_heavy()
 
 
 func _on_reload_pressed() -> void:
@@ -354,18 +464,23 @@ func _on_reload_pressed() -> void:
 		reload_progress = 0.0
 		ammo = p_gun["mag_size"]
 		perfect_reload_buff_timer = 2.5
-		_add_overcharge(CHARGE_PERFECT_RELOAD, "PERFECT RELOAD +14⚡")
-		screen_shake = 6.0
+		_play_sfx("perfect_reload", 0.98, 1.04)
+		_add_overcharge(CHARGE_PERFECT_RELOAD, "★ 完美换弹! +14⚡")
+		screen_shake = 7.0
 		_trigger_perfect_reload_effects()
 	else:
 		# Missed sweet spot -> slight jam penalty
 		reload_jammed = true
-		_spawn_text(player_pos + Vector2(0, -32), "JAMMED! (Missed Window)", Color(1.0, 0.35, 0.3))
+		_play_sfx("jam", 0.95, 1.02)
+		_spawn_text(player_pos + Vector2(0, -32), "卡壳延迟! (错过黄区)", Color(1.0, 0.35, 0.3))
 
 
 func _trigger_perfect_reload_effects() -> void:
 	var cleared: int = 0
 	var shock_radius: float = 135.0 if _has_passive("shock_reload") else 85.0
+	shockwaves.append({"pos": player_pos, "radius": 18.0, "max_r": shock_radius, "timer": 0.28, "col": Color(1.0, 0.9, 0.25, 0.42)})
+	if _has_passive("shell_magnet"):
+		scrap_shells += 5
 	for b in bullets:
 		if b["active"] and b["team"] == "enemy" and b["pos"].distance_to(player_pos) <= shock_radius:
 			b["active"] = false
@@ -375,7 +490,7 @@ func _trigger_perfect_reload_effects() -> void:
 			if e["hp"] > 0.0 and e["pos"].distance_to(player_pos) <= shock_radius + 30.0:
 				_damage_enemy(e, 26.0, false)
 	if cleared >= 3 and _cur_dynamo()["id"] == "bullet_shatter":
-		_add_overcharge(_cur_dynamo()["bonus"], "AEGIS SHATTER DYNAMO +28⚡")
+		_add_overcharge(_cur_dynamo()["bonus"], "⚡神盾碎弹核心触发 +28⚡")
 
 
 func _try_fire_primary() -> void:
@@ -393,29 +508,36 @@ func _try_fire_primary() -> void:
 	ammo -= 1
 	fire_cd = p_gun["fire_interval"]
 	var aim_dir := (get_global_mouse_position() - player_pos).normalized()
+	muzzle_flash_timer = 0.06
+	gun_recoil_offset = 8.0
+
+	# Eject spinning brass shell casing
+	var eject_dir := aim_dir.rotated(deg_to_rad(randf_range(95.0, 135.0)))
+	shells.append({"pos": player_pos - aim_dir * 4.0, "vel": eject_dir * randf_range(95.0, 155.0), "rot": randf() * TAU})
+	if shells.size() > 65:
+		shells.pop_front()
 
 	var dmg_mult: float = 1.25 if perfect_reload_buff_timer > 0.0 else 1.0
 	if is_final_round and _has_passive("final_amp"):
 		dmg_mult *= 1.6
 
 	if is_final_round:
-		screen_shake = 7.5
-		_spawn_text(player_pos + Vector2(0, -34), "FINAL ROUND!", Color(1.0, 0.78, 0.2))
+		_play_sfx("final_round", 0.96, 1.04)
+		screen_shake = 8.0
+		_spawn_text(player_pos + Vector2(0, -34), "★ 尾弹爆发 (FINAL ROUND)!", Color(1.0, 0.78, 0.2))
 		if primary_idx == 0:
-			# Piercing high-explosive slug
 			_spawn_bullet(player_pos + aim_dir * 16.0, aim_dir * 960.0, p_gun["damage"] * 2.5 * dmg_mult, "player", 9.0, true, true)
 		else:
-			# Triple shock-fan burst
 			for angle_deg in [-14.0, 0.0, 14.0]:
 				var dir := aim_dir.rotated(deg_to_rad(angle_deg))
 				_spawn_bullet(player_pos + dir * 16.0, dir * 860.0, p_gun["damage"] * 1.9 * dmg_mult, "player", 7.0, true, true)
-		# Auto start reload bar after Final Round
 		is_reloading = true
 		reload_progress = 0.0
 		reload_attempted = false
 		reload_jammed = false
 	else:
-		screen_shake = maxf(screen_shake, 2.0)
+		_play_sfx("shoot", 0.94, 1.08)
+		screen_shake = maxf(screen_shake, 2.2)
 		var spread := randf_range(-0.04, 0.04)
 		var dir := aim_dir.rotated(spread)
 		_spawn_bullet(player_pos + dir * 16.0, dir * p_gun["bullet_speed"], p_gun["damage"] * dmg_mult, "player", 5.0, false, false)
@@ -427,53 +549,57 @@ func _try_fire_heavy() -> void:
 	var h_gun := _cur_heavy()
 	var cost: float = h_gun["cost"]
 	if overcharge < cost:
-		_spawn_text(player_pos + Vector2(0, -30), "NEED %d⚡ OVERCHARGE!" % int(cost), Color(1.0, 0.3, 0.3))
+		_play_sfx("jam", 1.1, 1.2)
+		_spawn_text(player_pos + Vector2(0, -30), "超载能量不足! 需 %d⚡" % int(cost), Color(1.0, 0.35, 0.35))
 		fire_cd = 0.25
 		return
 
 	overcharge -= cost
-	fire_cd = 0.45
+	fire_cd = 0.42
+	heavy_flash_timer = 0.28
+	gun_recoil_offset = 13.0
+	_play_sfx("heavy_fire", 0.92, 1.05)
 	var aim_dir := (get_global_mouse_position() - player_pos).normalized()
 
 	match h_gun["type"]:
 		"swarm":
-			screen_shake = 8.0
-			_spawn_text(player_pos + Vector2(0, -36), "SWARM MISSILES! (-30⚡)", Color(0.3, 0.95, 1.0))
+			screen_shake = 9.0
+			_spawn_text(player_pos + Vector2(0, -36), "★ 蜂群追踪导弹! (-30⚡)", Color(0.3, 0.95, 1.0))
 			for i in range(5):
 				var ang := deg_to_rad(-24.0 + i * 12.0)
 				var dir := aim_dir.rotated(ang)
 				_spawn_bullet(player_pos + dir * 18.0, dir * 560.0, 34.0, "player", 7.0, false, false, true)
 		"rail":
-			screen_shake = 14.0
-			hitstop_timer = 0.04
-			_spawn_text(player_pos + Vector2(0, -36), "RAILGUN OVERDRIVE! (-50⚡)", Color(0.4, 1.0, 0.9))
+			screen_shake = 15.0
+			hitstop_timer = 0.045
+			_spawn_text(player_pos + Vector2(0, -36), "★ 超导轨道炮轰击! (-50⚡)", Color(0.4, 1.0, 0.9))
 			var beam_end := player_pos + aim_dir * 1100.0
+			rail_beams.append({"start": player_pos + aim_dir * 16.0, "end": beam_end, "timer": 0.28})
 			for e in enemies:
 				if e["hp"] > 0.0:
 					var closest := Geometry2D.get_closest_point_to_segment(e["pos"], player_pos, beam_end)
-					if closest.distance_to(e["pos"]) <= e["radius"] + 18.0:
-						_damage_enemy(e, 95.0, false, true)
+					if closest.distance_to(e["pos"]) <= e["radius"] + 20.0:
+						_damage_enemy(e, 95.0, true, true)
 		"black_hole":
-			screen_shake = 16.0
-			hitstop_timer = 0.05
-			_spawn_text(player_pos + Vector2(0, -36), "SINGULARITY UNLEASHED! (-90⚡)", Color(0.85, 0.4, 1.0))
+			screen_shake = 17.0
+			hitstop_timer = 0.055
+			_spawn_text(player_pos + Vector2(0, -36), "★ 奇点黑洞降临! (-90⚡)", Color(0.85, 0.4, 1.0))
 			black_holes.append({
 				"pos": player_pos + aim_dir * 45.0,
 				"vel": aim_dir * 145.0,
 				"timer": 3.2,
 				"tick_cd": 0.0
 			})
-	# Auto-snap back to primary if not enough charge for another shot
-	if overcharge < cost:
-		using_heavy = false
 
 
 func _trigger_active_item() -> void:
 	if active_item["timer"] > 0.0:
-		_spawn_text(player_pos + Vector2(0, -24), "Active Item Cooling Down...", Color.GRAY)
+		_spawn_text(player_pos + Vector2(0, -24), "主动道具冷却中...", Color.GRAY)
 		return
 	active_item["timer"] = active_item["cooldown"]
-	screen_shake = 10.0
+	_play_sfx("explosion", 1.15, 1.25)
+	screen_shake = 11.0
+	shockwaves.append({"pos": player_pos, "radius": 20.0, "max_r": 240.0, "timer": 0.35, "col": Color(0.3, 0.9, 1.0, 0.40)})
 	var cleared: int = 0
 	for b in bullets:
 		if b["active"] and b["team"] == "enemy" and b["pos"].distance_to(player_pos) <= 240.0:
@@ -483,9 +609,9 @@ func _trigger_active_item() -> void:
 		if e["hp"] > 0.0 and e["pos"].distance_to(player_pos) <= 240.0:
 			e["windup"] = 0.0
 			_damage_enemy(e, 20.0, false)
-	_spawn_text(player_pos + Vector2(0, -34), "EMP PULSE! Cleared %d bullets" % cleared, Color(0.4, 0.9, 1.0))
+	_spawn_text(player_pos + Vector2(0, -34), "EMP 清弹脉冲! 消除 %d 颗弹幕" % cleared, Color(0.4, 0.9, 1.0))
 	if cleared >= 3 and _cur_dynamo()["id"] == "bullet_shatter":
-		_add_overcharge(_cur_dynamo()["bonus"], "AEGIS SHATTER DYNAMO +28⚡")
+		_add_overcharge(_cur_dynamo()["bonus"], "⚡神盾碎弹核心触发 +28⚡")
 
 
 func _update_black_holes(delta: float) -> void:
@@ -605,11 +731,11 @@ func _update_bullets(delta: float) -> void:
 			if in_iframes and not b["grazed"] and dist_to_player <= graze_r and dodge_grazed_count < 2:
 				b["grazed"] = true
 				dodge_grazed_count += 1
-				_add_overcharge(CHARGE_DODGE_GRAZE, "GRAZE! +20⚡")
+				_play_sfx("graze", 0.95, 1.15)
+				_add_overcharge(CHARGE_DODGE_GRAZE, "★ 极限擦弹! +20⚡")
 
 			if dist_to_player <= PLAYER_RADIUS + b["radius"] - 2.0:
 				if in_iframes:
-					# Safely rolled right through the bullet!
 					continue
 				b["active"] = false
 				_damage_player(1)
@@ -617,16 +743,21 @@ func _update_bullets(delta: float) -> void:
 
 func _detonate_barrel(br: Dictionary) -> void:
 	br["alive"] = false
-	screen_shake = 12.0
-	hitstop_timer = 0.03
-	_spawn_text(br["pos"], "BOOM!", Color(1.0, 0.55, 0.1))
+	_play_sfx("explosion", 0.9, 1.05)
+	screen_shake = 14.0
+	hitstop_timer = 0.035
+	shockwaves.append({"pos": br["pos"], "radius": 24.0, "max_r": 140.0, "timer": 0.34, "col": Color(1.0, 0.5, 0.15, 0.44)})
+	for k in range(10):
+		var ang := randf() * TAU
+		debris_list.append({"pos": br["pos"], "vel": Vector2.RIGHT.rotated(ang) * randf_range(90.0, 220.0), "col": Color(0.95, 0.45, 0.15)})
+	_spawn_text(br["pos"], "★ 爆破桶轰炸!", Color(1.0, 0.55, 0.1))
 	var hit_any: bool = false
 	for e in enemies:
 		if e["hp"] > 0.0 and e["pos"].distance_to(br["pos"]) <= 135.0:
 			hit_any = true
-			_damage_enemy(e, 65.0, false)
+			_damage_enemy(e, 65.0, true)
 	if hit_any and _cur_dynamo()["id"] == "barrel_kick":
-		_add_overcharge(_cur_dynamo()["bonus"], "DEMOLITION DYNAMO +40⚡")
+		_add_overcharge(_cur_dynamo()["bonus"], "⚡爆破轰击核心触发 +40⚡")
 
 
 func _damage_enemy(e: Dictionary, amount: float, is_final: bool, from_direct_shot: bool = false) -> void:
@@ -634,10 +765,15 @@ func _damage_enemy(e: Dictionary, amount: float, is_final: bool, from_direct_sho
 		return
 	e["hp"] -= amount
 	e["flash"] = 0.12
+	_play_sfx("hit", 0.9, 1.15)
+
+	var dmg_col := Color(1.0, 0.85, 0.2) if (is_final or amount >= 30.0) else Color(0.95, 0.95, 1.0)
+	var prefix := "暴击 -" if (is_final or amount >= 30.0) else "-"
+	_spawn_text(e["pos"] + Vector2(randf_range(-16, 16), -22), "%s%d" % [prefix, int(amount)], dmg_col)
 
 	if from_direct_shot:
 		if is_final:
-			_add_overcharge(CHARGE_FINAL_ROUND_HIT, "FINAL HIT +8⚡")
+			_add_overcharge(CHARGE_FINAL_ROUND_HIT, "尾弹命中 +8⚡")
 		else:
 			_add_overcharge(CHARGE_NORMAL_HIT, "")
 
@@ -645,15 +781,21 @@ func _damage_enemy(e: Dictionary, amount: float, is_final: bool, from_direct_sho
 	if e["windup"] > 0.0 and (is_final or amount >= 25.0):
 		e["windup"] = 0.0
 		e["fire_cd"] = 1.6
-		hitstop_timer = 0.04
-		_add_overcharge(CHARGE_WEAKPOINT_INTERRUPT, "WEAK-POINT INTERRUPT! +35⚡")
+		hitstop_timer = 0.045
+		_play_sfx("perfect_reload", 1.15, 1.25)
+		shockwaves.append({"pos": e["pos"], "radius": 14.0, "max_r": 75.0, "timer": 0.25, "col": Color(1.0, 0.25, 0.25, 0.42)})
+		_add_overcharge(CHARGE_WEAKPOINT_INTERRUPT, "★ 弱点蓄力打断! +35⚡")
 
 	if e["hp"] <= 0.0:
+		_play_sfx("explosion", 1.1, 1.28)
+		for k in range(8):
+			var ang := randf() * TAU
+			debris_list.append({"pos": e["pos"], "vel": Vector2.RIGHT.rotated(ang) * randf_range(70.0, 180.0), "col": Color(0.55, 0.6, 0.68)})
 		var shell_drop: int = 12 if not active_overdrive_bet else 24
 		scrap_shells += shell_drop
-		_spawn_text(e["pos"], "+%d Shells" % shell_drop, Color(1.0, 0.88, 0.3))
+		_spawn_text(e["pos"], "+%d 废料弹壳" % shell_drop, Color(1.0, 0.88, 0.3))
 		if elapsed_time - last_kill_time <= 3.0 and _cur_dynamo()["id"] == "kill_chain":
-			_add_overcharge(_cur_dynamo()["bonus"], "RAMPAGE DYNAMO +12⚡")
+			_add_overcharge(_cur_dynamo()["bonus"], "⚡狂暴连杀核心 +12⚡")
 		last_kill_time = elapsed_time
 
 
@@ -661,13 +803,14 @@ func _damage_player(dmg: int) -> void:
 	if invuln_timer > 0.0:
 		return
 	invuln_timer = 1.0
+	_play_sfx("jam", 0.75, 0.85)
 	screen_shake = 14.0
 	if armor > 0:
 		armor -= 1
-		_spawn_text(player_pos + Vector2(0, -30), "ARMOR BROKEN!", Color(0.4, 0.8, 1.0))
+		_spawn_text(player_pos + Vector2(0, -30), "护甲碎裂! (-1 护甲)", Color(0.4, 0.8, 1.0))
 	else:
-		hp = maxi(1, hp - dmg) # Keep at minimum 1 HP in prototype so player never gets stuck
-		_spawn_text(player_pos + Vector2(0, -30), "-1 HP!", Color(1.0, 0.25, 0.25))
+		hp = maxi(1, hp - dmg)
+		_spawn_text(player_pos + Vector2(0, -30), "受击 -1 生命!", Color(1.0, 0.25, 0.25))
 
 
 func _add_overcharge(amount: float, label: String) -> void:
@@ -728,31 +871,27 @@ func _check_room_state() -> void:
 
 
 func _spawn_three_category_doors() -> void:
-	# Exactly matches the 3 Door Categories defined by the user:
-	# 1. Armory Door (Primary / Heavy / Dynamo Core)
-	# 2. Item Door (Active [Cap 1] / Passive [Cap 3])
-	# 3. Random Event Door (Currency / HP / Overcharge Energy / Monster Bounty)
 	doors = [
 		{
 			"cat": "armory",
-			"title": "[1] ARMORY DOOR (枪械门)",
-			"subtitle": "Drops: Primary / Heavy / Dynamo Core",
+			"title": "【1】军械库大门 (枪械门)",
+			"subtitle": "掉落：主武器 / 重火器 / 充能核心",
 			"rect": Rect2(200.0, 92.0, 240.0, 54.0),
 			"bet": false,
 			"color": Color(1.0, 0.62, 0.2)
 		},
 		{
 			"cat": "item",
-			"title": "[2] TACTICAL ITEM DOOR (道具门)",
-			"subtitle": "Drops: Active (Cap 1) / Passive (Cap 3)",
+			"title": "【2】战术道具门 (道具门)",
+			"subtitle": "掉落：主动道具(上限1) / 被动(上限3)",
 			"rect": Rect2(520.0, 92.0, 240.0, 54.0),
 			"bet": false,
 			"color": Color(0.3, 0.85, 1.0)
 		},
 		{
 			"cat": "event",
-			"title": "[3] RANDOM EVENT DOOR (事件门)",
-			"subtitle": "Shop / HP-Energy Reactor / Bounty",
+			"title": "【3】随机事件门 (事件门)",
+			"subtitle": "黑市军火商 / 反应堆回血充能 / 悬赏怪",
 			"rect": Rect2(840.0, 92.0, 240.0, 54.0),
 			"bet": false,
 			"color": Color(0.85, 0.45, 1.0)
@@ -769,19 +908,20 @@ func _on_bet_pressed() -> void:
 				if overcharge >= 25.0:
 					overcharge -= 25.0
 					d["bet"] = true
-					_spawn_text(d["rect"].get_center(), "OVERDRIVE BET LOCKED! (-25⚡ -> 2x Drops)", Color(1.0, 0.35, 0.2))
+					_play_sfx("perfect_reload", 0.9, 0.95)
+					_spawn_text(d["rect"].get_center(), "★ 超载押注已锁定! (-25⚡ -> 下房双倍掉落)", Color(1.0, 0.35, 0.2))
 				else:
-					_spawn_text(player_pos + Vector2(0, -30), "Need 25⚡ to place Overdrive Bet!", Color(1.0, 0.4, 0.4))
+					_play_sfx("jam", 1.0, 1.05)
+					_spawn_text(player_pos + Vector2(0, -30), "超载押注需要 25⚡ 能量!", Color(1.0, 0.4, 0.4))
 
 
 func _on_interact_pressed() -> void:
-	# Flip nearby cover table
 	for t in cover_tables:
 		if not t["flipped"] and t["hp"] > 0.0 and t["rect"].grow(38.0).has_point(player_pos):
 			t["flipped"] = true
-			screen_shake = 5.0
-			_spawn_text(t["rect"].get_center(), "TABLE FLIPPED! (Blocks Bullets)", Color(0.9, 0.8, 0.5))
-			# Clear immediate bullets around the table flip
+			_play_sfx("hit", 0.75, 0.85)
+			screen_shake = 6.0
+			_spawn_text(t["rect"].get_center(), "★ 掀翻木桌掩体! (阻挡敌方弹幕)", Color(0.9, 0.8, 0.5))
 			for b in bullets:
 				if b["active"] and b["team"] == "enemy" and t["rect"].grow(26.0).has_point(b["pos"]):
 					b["active"] = false
@@ -790,7 +930,6 @@ func _on_interact_pressed() -> void:
 	if not room_cleared:
 		return
 
-	# Check entering one of the 3 doors
 	for d in doors:
 		if d["rect"].grow(42.0).has_point(player_pos):
 			_enter_door(d)
@@ -801,13 +940,13 @@ func _enter_door(d: Dictionary) -> void:
 	var cat: String = d["cat"]
 	var bet: bool = d["bet"]
 	room_number += 1
+	_play_sfx("perfect_reload", 1.0, 1.08)
 
-	# Grant previous room's category reward upon stepping through!
 	match cat:
 		"armory":
 			heavy_idx = (heavy_idx + 1) % heavy_weapons.size()
 			dynamo_idx = (dynamo_idx + 1) % dynamo_cores.size()
-			current_event_popup = "ARMORY REWARD: Switched Heavy -> %s & Dynamo -> %s" % [_cur_heavy()["name"], _cur_dynamo()["name"]]
+			current_event_popup = "【军械门奖励】解锁切换重火器 -> %s | 充能核心 -> %s" % [_cur_heavy()["name"], _cur_dynamo()["name"]]
 		"item":
 			_grant_item_door_reward(bet)
 		"event":
@@ -816,27 +955,27 @@ func _enter_door(d: Dictionary) -> void:
 	_setup_room(room_number, cat, bet)
 
 
-func _grant_item_door_reward(bet: bool) -> void:
+func _grant_item_door_reward(_bet: bool) -> void:
 	var pool: Array[Dictionary] = [
-		{"id": "wide_sweet", "name": "Chrono Slide-Stop", "desc": "Wider Perfect Reload sweet-spot window"},
-		{"id": "final_amp", "name": "Omega Firing Pin", "desc": "Final Round deals +60% bonus damage"},
-		{"id": "over_cap", "name": "Capacitor Coil", "desc": "Max Overcharge increased to 130"},
-		{"id": "shell_magnet", "name": "Scrap Harvester", "desc": "Perfect Reloads grant +5 Scrap Shells"}
+		{"id": "wide_sweet", "name": "时序滑块卡扣", "desc": "大幅拓宽主动换弹的黄色完美判定区"},
+		{"id": "final_amp", "name": "欧米茄强化撞针", "desc": "尾弹(Final Round)额外造成 +60% 暴击伤害"},
+		{"id": "over_cap", "name": "高压电容线圈", "desc": "最大超载能量上限提升至 130⚡"},
+		{"id": "shell_magnet", "name": "磁力废料回收器", "desc": "每次触发完美换弹额外获得 +5 废料弹壳"}
 	]
 	var candidate: Dictionary = pool[randi() % pool.size()]
 	if _has_passive(candidate["id"]):
 		scrap_shells += 25
-		current_event_popup = "ITEM DOOR: Duplicate Passive Salvaged -> +25 Scrap Shells!"
+		current_event_popup = "【道具门】重复被动自动拆解 -> 获得 +25 废料弹壳!"
 		return
 
 	if passive_items.size() < PASSIVE_CAP:
 		passive_items.append(candidate)
 		if candidate["id"] == "over_cap":
 			max_overcharge = 130.0
-		current_event_popup = "ITEM DOOR: Equipped Passive [%d/3]: %s" % [passive_items.size(), candidate["name"]]
+		current_event_popup = "【道具门】装备新被动 [%d/3]：%s (%s)" % [passive_items.size(), candidate["name"], candidate["desc"]]
 	else:
 		pending_passive_offer = candidate
-		current_event_popup = "PASSIVE SLOTS FULL [3/3]! Press [7], [8], or [9] to swap & salvage (+20 Shells) for: " + candidate["name"]
+		current_event_popup = "【被动槽已满 3/3】按数字键 [7]、[8] 或 [9] 替换旧被动并拆解回收(+20弹壳) -> 新被动：" + candidate["name"]
 
 
 func _resolve_passive_swap(slot_index: int) -> void:
@@ -845,31 +984,29 @@ func _resolve_passive_swap(slot_index: int) -> void:
 	var old_item := passive_items[slot_index]
 	passive_items[slot_index] = pending_passive_offer
 	scrap_shells += 20
-	current_event_popup = "Swapped [%s] -> [%s] (+20 Shells Salvage!)" % [old_item["name"], pending_passive_offer["name"]]
+	_play_sfx("perfect_reload", 1.05, 1.1)
+	current_event_popup = "已替换 [%s] -> [%s] (旧件拆解 +20 废料弹壳!)" % [old_item["name"], pending_passive_offer["name"]]
 	pending_passive_offer = {}
 
 
 func _trigger_random_event_room() -> void:
 	var roll: int = randi() % 3
 	if roll == 0:
-		# Pit-Stop Merchant & Heal
 		if scrap_shells >= 25:
 			scrap_shells -= 25
 			hp = mini(max_hp, hp + 2)
 			armor += 1
-			current_event_popup = "EVENT [Pit-Stop Gunsmith]: Spent 25 Shells -> Restored +2 HP & +1 Armor!"
+			current_event_popup = "【事件门·整备铁匠铺】消耗 25 弹壳 -> 恢复 +2 生命 & 锻造 +1 护甲!"
 		else:
 			hp = mini(max_hp, hp + 1)
-			current_event_popup = "EVENT [Rest Workbench]: Emergency Patch -> Restored +1 HP!"
+			current_event_popup = "【事件门·应急维修台】免费紧急包扎 -> 恢复 +1 生命!"
 	elif roll == 1:
-		# Blood-Overcharge Reactor (HP + Energy + Currency combo)
 		overcharge = max_overcharge
 		scrap_shells += 35
-		current_event_popup = "EVENT [Overcharge Reactor]: Siphoned Anomaly -> Overcharge Filled to 100% + 35 Shells!"
+		current_event_popup = "【事件门·超载反应堆】汲取异常能量 -> 超载槽瞬间充满 100% + 获得 35 弹壳!"
 	else:
-		# High-Value Monster Ambush Event
 		scrap_shells += 50
-		current_event_popup = "EVENT [Vault Ambush]: Elite Bounty Activated! Clear room for +50 Bonus Shells!"
+		current_event_popup = "【事件门·金库伏击悬赏】精英悬赏触发! 清理本房间直接入账 +50 赏金弹壳!"
 
 
 func _setup_room(r_num: int, cat: String, bet: bool) -> void:
@@ -935,7 +1072,13 @@ func _draw() -> void:
 	for gy in range(int(ARENA_RECT.position.y), int(ARENA_RECT.end.y), 80):
 		draw_line(Vector2(ARENA_RECT.position.x, gy), Vector2(ARENA_RECT.end.x, gy), Color(0.18, 0.20, 0.25), 1.0)
 
-	var font := ThemeDB.fallback_font
+	var font: Font = zh_font if zh_font != null else ThemeDB.fallback_font
+
+	# 1.5 Draw Floor Shell Casings & Mechanical Debris
+	for s in shells:
+		draw_rect(Rect2(s["pos"].x - 3, s["pos"].y - 1.5, 6, 3), Color(0.92, 0.72, 0.22, 0.85))
+	for d in debris_list:
+		draw_rect(Rect2(d["pos"].x - 3, d["pos"].y - 3, 6, 6), d["col"])
 
 	# 2. Draw 3 Category Previewed Doors when Room is Cleared
 	for d in doors:
@@ -946,11 +1089,11 @@ func _draw() -> void:
 		draw_string(font, r.position + Vector2(10, 22), d["title"], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, col.lightened(0.3))
 		draw_string(font, r.position + Vector2(10, 42), d["subtitle"], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color.WHITE)
 		if d["bet"]:
-			draw_string(font, r.position + Vector2(10, -8), "★ OVERDRIVE BET ACTIVE (2x Drops!)", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(1.0, 0.35, 0.2))
+			draw_string(font, r.position + Vector2(10, -8), "★ 已注入超载押注 (下房双倍奖励!)", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(1.0, 0.35, 0.2))
 		elif d["cat"] != "event":
-			draw_string(font, r.position + Vector2(10, -8), "[E] Enter   [F] Inject 25⚡ Bet", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.8, 0.9, 1.0))
+			draw_string(font, r.position + Vector2(10, -8), "[E] 进门   [F] 注入 25⚡ 开启超载押注", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.8, 0.9, 1.0))
 		else:
-			draw_string(font, r.position + Vector2(10, -8), "[E] Enter Event Room", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.9, 0.75, 1.0))
+			draw_string(font, r.position + Vector2(10, -8), "[E] 进入随机事件房", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.9, 0.75, 1.0))
 
 	# 3. Draw Cover Tables & Explosive Barrels
 	for t in cover_tables:
@@ -959,52 +1102,98 @@ func _draw() -> void:
 		var col := Color(0.45, 0.35, 0.22) if not t["flipped"] else Color(0.75, 0.62, 0.35)
 		draw_rect(t["rect"], col)
 		draw_rect(t["rect"], Color.BLACK, false, 2.0)
-		var lbl := "[E] Flip Table" if not t["flipped"] else "COVER (%d)" % int(t["hp"])
+		var lbl := "[E] 掀桌掩体" if not t["flipped"] else "掩体耐久 (%d)" % int(t["hp"])
 		draw_string(font, t["rect"].position + Vector2(6, 22), lbl, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color.WHITE)
 
 	for br in barrels:
 		if br["alive"]:
 			draw_circle(br["pos"], 16.0, Color(0.85, 0.25, 0.15))
 			draw_circle(br["pos"], 10.0, Color(1.0, 0.65, 0.1))
-			draw_string(font, br["pos"] + Vector2(-18, -20), "TNT", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(1.0, 0.8, 0.2))
+			draw_string(font, br["pos"] + Vector2(-22, -20), "炸药桶", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(1.0, 0.8, 0.2))
 
-	# 4. Draw Translucent Player Black Holes (Capped Alpha <= 45% under enemy bullets!)
+	# 4. Draw Translucent Player Black Holes, Shockwaves & Railgun Beams (Capped Alpha <= 45% under enemy bullets!)
+	for sw in shockwaves:
+		draw_arc(sw["pos"], sw["radius"], 0.0, TAU, 48, sw["col"], 4.0)
+		draw_circle(sw["pos"], sw["radius"], Color(sw["col"].r, sw["col"].g, sw["col"].b, 0.12))
+	for rb in rail_beams:
+		var a_pct: float = clampf(rb["timer"] / 0.28, 0.0, 1.0)
+		draw_line(rb["start"], rb["end"], Color(0.3, 1.0, 0.95, 0.42 * a_pct), 24.0 * a_pct)
+		draw_line(rb["start"], rb["end"], Color(1.0, 1.0, 1.0, 0.85 * a_pct), 6.0 * a_pct)
 	for bh in black_holes:
-		draw_circle(bh["pos"], 125.0, Color(0.55, 0.2, 0.95, 0.25))
+		draw_circle(bh["pos"], 125.0, Color(0.55, 0.2, 0.95, 0.22))
 		draw_circle(bh["pos"], 32.0, Color(0.1, 0.02, 0.2, 0.45))
-		draw_arc(bh["pos"], 125.0, 0.0, TAU, 48, Color(0.75, 0.4, 1.0, 0.45), 2.5)
+		draw_arc(bh["pos"], 125.0, elapsed_time * 3.0, elapsed_time * 3.0 + TAU * 0.8, 36, Color(0.8, 0.45, 1.0, 0.45), 3.0)
 
-	# 5. Draw Enemies & Interruptible Red-Flash Windups
+	# 5. Draw Enemies (Pixel Sprites + Hit-Flash + Interruptible Red-Flash Windups)
 	for e in enemies:
 		if e["hp"] <= 0.0:
 			continue
-		var ecol := Color(0.95, 0.32, 0.32) if e["flash"] <= 0.0 else Color.WHITE
 		if e["windup"] > 0.0:
-			# High-visibility Weak-Point Interrupt window!
-			draw_circle(e["pos"], e["radius"] + 12.0, Color(1.0, 0.15, 0.15, 0.35))
-			draw_string(font, e["pos"] + Vector2(-42, -32), "⚡INTERRUPT! (+35⚡)", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(1.0, 0.9, 0.2))
-		draw_circle(e["pos"], e["radius"], ecol)
-		# Enemy HP bar
+			draw_circle(e["pos"], e["radius"] + 14.0, Color(1.0, 0.15, 0.15, 0.35))
+			draw_string(font, e["pos"] + Vector2(-52, -32), "⚡弱点蓄力! 重击打断(+35⚡)", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(1.0, 0.9, 0.2))
+
+		var etex: Texture2D = tex_enemy_burst
+		if e["archetype"] == "ring":
+			etex = tex_enemy_ring
+		elif e["archetype"] == "sniper":
+			etex = tex_enemy_sniper
+
+		var mod_col := Color(3.0, 3.0, 3.0, 1.0) if e["flash"] > 0.0 else Color.WHITE
+		if etex != null:
+			var sz := etex.get_size()
+			draw_texture_rect(etex, Rect2(e["pos"] - sz * 0.5, sz), false, mod_col)
+		else:
+			draw_circle(e["pos"], e["radius"], Color.WHITE if e["flash"] > 0.0 else Color(0.95, 0.32, 0.32))
+
 		var hp_pct: float = clampf(e["hp"] / e["max_hp"], 0.0, 1.0)
 		draw_rect(Rect2(e["pos"].x - 20, e["pos"].y - 26, 40, 5), Color(0.2, 0.2, 0.2))
 		draw_rect(Rect2(e["pos"].x - 20, e["pos"].y - 26, 40 * hp_pct, 5), Color(1.0, 0.3, 0.3))
 
-	# 6. Draw Player & Dodge Graze Ring
+	# 6. Draw Player Afterimages, Dodge Graze Ring, Animated Pixel Sheet & Gun Sprite
+	for ai in afterimages:
+		var a_alpha: float = clampf(ai["timer"] / 0.20, 0.0, 1.0) * 0.45
+		if tex_player != null:
+			draw_texture_rect_region(tex_player, Rect2(ai["pos"] - Vector2(24, 18), Vector2(48, 36)), Rect2(0, 0, 48, 36), Color(0.2, 0.95, 1.0, a_alpha))
+		else:
+			draw_circle(ai["pos"], PLAYER_RADIUS, Color(0.2, 0.95, 1.0, a_alpha))
+
 	var in_iframes: bool = is_dodging and dodge_timer <= DODGE_IFRAME_END
 	var graze_r := GRAZE_RADIUS * (1.25 if _has_passive("fleet_step") else 1.0)
 	if in_iframes:
-		draw_arc(player_pos, graze_r, 0.0, TAU, 36, Color(0.2, 0.95, 1.0, 0.75), 2.5)
+		draw_arc(player_pos, graze_r, 0.0, TAU, 36, Color(0.2, 0.95, 1.0, 0.80), 2.5)
 	else:
 		draw_arc(player_pos, graze_r, 0.0, TAU, 36, Color(0.2, 0.7, 0.9, 0.18), 1.0)
 
-	var p_col := Color(0.2, 1.0, 0.95) if in_iframes else (Color(1.0, 0.85, 0.2) if using_heavy else Color(0.3, 0.85, 0.45))
-	draw_circle(player_pos, PLAYER_RADIUS, p_col)
 	var aim_dir := (get_global_mouse_position() - player_pos).normalized()
-	draw_line(player_pos, player_pos + aim_dir * 24.0, Color.WHITE, 3.5)
+	if tex_player != null:
+		var moving: bool = player_vel.length_squared() > 20.0
+		var frame_idx: int = int(elapsed_time * (12.0 if moving else 4.0)) % 4
+		var src_rect := Rect2(frame_idx * 48.0, 0.0, 48.0, 36.0)
+		var dst_size := Vector2(48.0, 36.0)
+		if is_dodging:
+			dst_size = Vector2(54.0, 30.0)
+		var p_mod := Color(0.5, 1.0, 1.0, 1.0) if in_iframes else Color.WHITE
+		draw_texture_rect_region(tex_player, Rect2(player_pos - dst_size * 0.5, dst_size), src_rect, p_mod)
+	else:
+		draw_circle(player_pos, PLAYER_RADIUS, Color(0.2, 1.0, 0.95) if in_iframes else Color(0.3, 0.85, 0.45))
+
+	# Draw Handcrafted Rotated Gun Sprite + Recoil + Muzzle Flash
+	var gun_tex: Texture2D = tex_gun_heavy if heavy_flash_timer > 0.0 else (tex_gun_revolver if primary_idx == 0 else tex_gun_smg)
+	var gun_pos := player_pos + aim_dir * (16.0 - gun_recoil_offset)
+	if gun_tex != null:
+		draw_set_transform(shake_ofs + gun_pos, aim_dir.angle(), Vector2.ONE)
+		var gsz := gun_tex.get_size()
+		draw_texture_rect(gun_tex, Rect2(-gsz * 0.3, gsz), false)
+		if muzzle_flash_timer > 0.0 or heavy_flash_timer > 0.20:
+			draw_circle(Vector2(gsz.x * 0.7, 0), 9.0, Color(1.0, 0.92, 0.35, 0.9))
+			draw_circle(Vector2(gsz.x * 0.7, 0), 5.0, Color.WHITE)
+		draw_set_transform(shake_ofs, 0.0, Vector2.ONE)
+	else:
+		draw_line(player_pos, gun_pos + aim_dir * 12.0, Color.WHITE, 3.5)
 
 	# 7. Overhead Active Reload Slider Bar (Micro-UI directly above player)
 	if is_reloading:
-		var bar_pos := player_pos + Vector2(-36, -34)
+		var bar_pos := player_pos + Vector2(-36, -36)
 		var bar_w: float = 72.0
 		var p_gun := _cur_primary()
 		var s_start: float = p_gun["sweet_start"]
@@ -1013,15 +1202,16 @@ func _draw() -> void:
 		draw_rect(Rect2(bar_pos.x + bar_w * s_start, bar_pos.y, bar_w * (s_end - s_start), 8), Color(1.0, 0.88, 0.15))
 		var cursor_x := bar_pos.x + bar_w * clampf(reload_progress, 0.0, 1.0)
 		draw_line(Vector2(cursor_x, bar_pos.y - 3), Vector2(cursor_x, bar_pos.y + 11), Color.WHITE, 3.0)
-		draw_string(font, bar_pos + Vector2(0, -5), "[R] ACTIVE RELOAD", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(1.0, 0.9, 0.3))
+		draw_string(font, bar_pos + Vector2(-4, -5), "[R] 抓黄区完美换弹", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(1.0, 0.9, 0.3))
 
 	# 8. Draw Pooled Projectiles (Enemy bullets on top layer with white core + bright red rim)
 	for b in bullets:
 		if not b["active"]:
 			continue
 		if b["team"] == "player":
-			var bcol := Color(1.0, 0.82, 0.2) if b["is_final"] else Color(0.35, 0.95, 1.0)
+			var bcol := Color(1.0, 0.82, 0.2) if b["is_final"] else (Color(0.4, 1.0, 0.85) if b["homing"] else Color(0.35, 0.95, 1.0))
 			draw_circle(b["pos"], b["radius"], bcol)
+			draw_circle(b["pos"], b["radius"] * 0.5, Color.WHITE)
 		else:
 			draw_circle(b["pos"], b["radius"] + 2.0, Color(1.0, 0.12, 0.22))
 			draw_circle(b["pos"], b["radius"] * 0.55, Color.WHITE)
@@ -1036,30 +1226,29 @@ func _draw() -> void:
 
 
 func _draw_hud(font: Font) -> void:
-	# Top Status Bar
-	draw_rect(Rect2(0, 0, 1280, 82), Color(0.05, 0.06, 0.08, 0.95))
-	draw_string(font, Vector2(20, 26), "ROOM #%d   HP: %d/%d   ARMOR: %d   SCRAP SHELLS: %d" % [room_number, hp, max_hp, armor, scrap_shells], HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+	draw_rect(Rect2(0, 0, 1280, 84), Color(0.05, 0.06, 0.08, 0.95))
+	draw_string(font, Vector2(20, 26), "房间 #%d   ❤️生命: %d/%d   🛡️护甲: %d   🪙废料弹壳: %d" % [room_number, hp, max_hp, armor, scrap_shells], HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
 
-	# Overcharge Gauge
 	var oc_pct := clampf(overcharge / max_overcharge, 0.0, 1.0)
-	draw_rect(Rect2(480, 10, 320, 20), Color(0.18, 0.2, 0.25))
-	draw_rect(Rect2(480, 10, 320 * oc_pct, 20), Color(0.25, 0.95, 0.85))
-	draw_string(font, Vector2(490, 25), "OVERCHARGE: %d / %d ⚡ (Heavy Cost: %d⚡)" % [int(overcharge), int(max_overcharge), int(_cur_heavy()["cost"])], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color.BLACK if oc_pct > 0.4 else Color.WHITE)
+	var h_cost: float = _cur_heavy()["cost"]
+	var ready_heavy: bool = overcharge >= h_cost
+	draw_rect(Rect2(470, 8, 340, 22), Color(0.18, 0.2, 0.25))
+	draw_rect(Rect2(470, 8, 340 * oc_pct, 22), Color(1.0, 0.82, 0.2) if ready_heavy else Color(0.25, 0.95, 0.85))
+	var oc_label := "⚡超载能量: %d / %d (右键重火器消耗: %d⚡%s)" % [int(overcharge), int(max_overcharge), int(h_cost), " [可发射!]" if ready_heavy else ""]
+	draw_string(font, Vector2(478, 24), oc_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color.BLACK if oc_pct > 0.35 else Color.WHITE)
 
-	var mode_str := "ACTIVE MODE: [HEAVY SPENDER]" if using_heavy else ("AMMO: %d / %d %s" % [ammo, _cur_primary()["mag_size"], "(NEXT IS FINAL ROUND!)" if ammo == 1 else ""])
-	draw_string(font, Vector2(825, 26), mode_str, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color(1.0, 0.85, 0.2) if (using_heavy or ammo == 1) else Color(0.6, 0.95, 1.0))
+	var mode_str := "弹匣: %d / %d %s" % [ammo, _cur_primary()["mag_size"], "★下一发是【尾弹】!" if ammo == 1 else ""]
+	draw_string(font, Vector2(830, 26), mode_str, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color(1.0, 0.85, 0.2) if ammo == 1 else Color(0.6, 0.95, 1.0))
 
-	# 7-Slot Loadout Readout (3 Armory + 1 Active + 3 Passives)
-	draw_string(font, Vector2(20, 50), "ARMORY [Z/X/1-3] -> Primary: %s | Heavy [Q]: %s | Dynamo: %s" % [_cur_primary()["name"], _cur_heavy()["name"], _cur_dynamo()["name"]], HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(0.85, 0.9, 1.0))
+	draw_string(font, Vector2(20, 50), "【军械 3槽】(按Z/X/1-3可随时测试切换) -> 左键主枪: %s | 右键重火器: %s | 核心: %s" % [_cur_primary()["name"], _cur_heavy()["name"], _cur_dynamo()["name"]], HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(0.85, 0.9, 1.0))
 
 	var p_names: Array[String] = []
 	for p in passive_items:
 		p_names.append(p["name"])
-	var cd_txt := "READY [C]" if active_item["timer"] <= 0.0 else ("%.1fs" % active_item["timer"])
-	draw_string(font, Vector2(20, 72), "ITEMS -> Active (1/1): %s (%s) | Passives (%d/3): %s" % [active_item["name"], cd_txt, passive_items.size(), ", ".join(p_names)], HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(0.6, 1.0, 0.75))
+	var cd_txt := "就绪 [按Q释放]" if active_item["timer"] <= 0.0 else ("冷却 %.1f秒" % active_item["timer"])
+	draw_string(font, Vector2(20, 73), "【战术道具 4槽】-> 主动(1/1): %s (%s) | 被动(%d/3): %s" % [active_item["name"], cd_txt, passive_items.size(), "、".join(p_names)], HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(0.6, 1.0, 0.75))
 
-	# Bottom Banner / Controls & Event Log
-	draw_rect(Rect2(0, 655, 1280, 65), Color(0.05, 0.06, 0.08, 0.95))
+	draw_rect(Rect2(0, 654, 1280, 66), Color(0.05, 0.06, 0.08, 0.95))
 	if current_event_popup != "":
-		draw_string(font, Vector2(20, 678), "LAST ROOM / EVENT: " + current_event_popup, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(1.0, 0.88, 0.35))
-	draw_string(font, Vector2(20, 704), "CONTROLS: [WASD] Move | [LMB] Fire | [RMB/Space] Dodge Roll (Graze=+20⚡) | [R] Active Reload (+14⚡) | [Q] Swap Heavy | [C] Active Item | [E] Flip Table / Enter Door | [F] Bet 25⚡ on Door | [Z/X/1-3] Test Guns & Dynamos", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.75, 0.8, 0.88))
+		draw_string(font, Vector2(20, 678), "📢 房间结算与掉落: " + current_event_popup, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(1.0, 0.88, 0.35))
+	draw_string(font, Vector2(20, 704), "操作键位：[WASD]移动 | [空格]翻滚(擦弹+20⚡) | [左键]主武器 | [右键]瞬发重火器 | [R]主动换弹(+14⚡) | [Q]主动道具 | [E]掀桌/进门 | [F]门前押注25⚡ | [Z/X/1-3]切换枪械与核心", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(0.82, 0.88, 0.96))

@@ -10,10 +10,16 @@ config_version=5
 
 [application]
 
-config/name="ChaosV4"
-; run/main_scene will be set by /dev-story or developer once the main scene exists
+config/name="CHAMBER OVERDRIVE (膛室超载)"
+run/main_scene="res://prototypes/chamber_overdrive_proto/prototype_arena.tscn"
 config/features=PackedStringArray("4.7", "Forward Plus")
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
 
 [rendering]
 
-renderer/rendering_method="forward_plus"
+textures/canvas_textures/default_texture_filter=0
