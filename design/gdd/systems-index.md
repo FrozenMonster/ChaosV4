@@ -31,9 +31,9 @@ To support this loop without spaghetti coupling or frame spikes during 500-bulle
 | # | System Name | Category | Priority | Status | Design Doc | Depends On |
 |---|-------------|----------|----------|--------|------------|------------|
 | 1 | Combat Event Bus & Data Schema (inferred) | Core | MVP | Approved | design/gdd/combat-event-bus.md | — |
-| 2 | Player 3C & Dodge-Graze Controller | Core | MVP | Not Started | design/gdd/player-3c-controller.md | — |
-| 3 | Pooled Bullet-Hell & Damage System | Core | MVP | Not Started | design/gdd/bullet-hell-damage-system.md | Combat Event Bus & Data Schema (inferred), Player 3C & Dodge-Graze Controller |
-| 4 | Dual-Gun, Active Reload & Overcharge Engine | Gameplay | MVP | Not Started | design/gdd/dual-gun-overcharge-engine.md | Combat Event Bus & Data Schema (inferred), Player 3C & Dodge-Graze Controller, Pooled Bullet-Hell & Damage System |
+| 2 | Player 3C, Dodge-Graze & Tactical Arena Interactables | Core | MVP | Approved | design/gdd/player-3c-controller.md | — |
+| 3 | Pooled Bullet-Hell & Damage System | Core | MVP | Not Started | design/gdd/bullet-hell-damage-system.md | Combat Event Bus & Data Schema (inferred), Player 3C, Dodge-Graze & Tactical Arena Interactables |
+| 4 | Dual-Gun, Active Reload & Overcharge Engine | Gameplay | MVP | Not Started | design/gdd/dual-gun-overcharge-engine.md | Combat Event Bus & Data Schema (inferred), Player 3C, Dodge-Graze & Tactical Arena Interactables, Pooled Bullet-Hell & Damage System |
 | 5 | 7-Slot Loadout & Tactical Items System | Gameplay | MVP | Not Started | design/gdd/loadout-and-items-system.md | Combat Event Bus & Data Schema (inferred), Dual-Gun, Active Reload & Overcharge Engine |
 | 6 | Enemy AI, Interrupt Telegraphs & Boss System | Gameplay | MVP | Not Started | design/gdd/enemy-and-boss-system.md | Combat Event Bus & Data Schema (inferred), Pooled Bullet-Hell & Damage System, Dual-Gun, Active Reload & Overcharge Engine |
 | 7 | 3-Door Routing, Overdrive Bet & Floor Generator | Progression | MVP | Not Started | design/gdd/door-routing-and-floor-gen.md | Dual-Gun, Active Reload & Overcharge Engine, 7-Slot Loadout & Tactical Items System, Enemy AI, Interrupt Telegraphs & Boss System |
@@ -138,10 +138,10 @@ To support this loop without spaghetti coupling or frame spikes during 500-bulle
 | Metric | Count |
 |--------|-------|
 | Total systems identified | 11 |
-| Design docs started | 1 |
-| Design docs reviewed | 1 |
-| Design docs approved | 1 |
-| MVP systems designed | 1/8 |
+| Design docs started | 2 |
+| Design docs reviewed | 2 |
+| Design docs approved | 2 |
+| MVP systems designed | 2/8 |
 | Vertical Slice systems designed | 0/2 |
 
 ---
