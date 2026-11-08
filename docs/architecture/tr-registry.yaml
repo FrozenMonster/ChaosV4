@@ -1,69 +1,82 @@
 # Technical Requirement ID Registry
-#
-# PURPOSE: Persistent, stable IDs for every GDD technical requirement.
-# Prevents TR-ID renumbering across /architecture-review runs, which would
-# break story references.
-#
-# RULES:
-#   - IDs are PERMANENT. Never renumber, never delete (use status: deprecated).
-#   - Add new entries only at the END of each system's list.
-#   - When a GDD requirement is reworded (same intent): update `requirement`
-#     text and add a `revised` date. The ID stays the same.
-#   - When a requirement is removed from the GDD: set status: deprecated.
-#   - When a requirement is split or replaced: set
-#     status: "superseded-by: TR-[system]-NNN" with the new TR-ID(s), quoted:
-#     unquoted, the second colon makes the file invalid YAML.
-#
-# WRITTEN BY: /architecture-review (appends new entries, never overwrites)
-# READ BY:    /create-stories (embed IDs in stories)
-#             /dev-story (current requirement text before implementing)
-#             /story-done (look up current requirement text at review time)
-#             /story-readiness (validate TR-ID exists and is active)
-#             /create-epics (trace requirements to ADR coverage)
-#             /test-helpers (map requirements to tested systems)
-#             /adopt (brownfield audit: is the registry there)
-#             /create-architecture (reuses registered IDs in its baseline)
-#
-# ID FORMAT: TR-[system]-[NNN]
-#   [system] = a short lowercase slug for the system. It is an alias: the
-#   system's key (system_overrides and the like) is its GDD filename stem
-#   NNN = three-digit zero-padded sequence per system, starting at 001
-#
-# STATUS VALUES: active | deprecated | "superseded-by: TR-[system]-NNN"
-#
-# LAYOUT: the one shape .claude/scripts/registry.sh reads. requirements: holds
-#   a block list, or [] while it is empty. Each entry starts "- id: TR-..." with
-#   the dash at column 0, as in the examples (or 2, the same for every entry);
-#   its fields sit two columns past the dash. Quote a value that holds ": ". A
-#   line in any other shape is reported as unsupported layout, with its number.
-
 version: 1
-last_updated: ""
+last_updated: "2026-11-08"
 
-requirements: []
-
-# --- EXAMPLE ENTRIES (remove when first real entries are added) ---
-#
-# - id: TR-combat-001
-#   system: combat
-#   gdd: design/gdd/combat-system.md
-#   requirement: "Player takes damage from enemies based on attack power minus defence"
-#   created: 2026-03-10
-#   revised: ""
-#   status: active
-#
-# - id: TR-combat-002
-#   system: combat
-#   gdd: design/gdd/combat-system.md
-#   requirement: "Combo window timing is 0.4 seconds between hits"
-#   created: 2026-03-10
-#   revised: "2026-04-01"
-#   status: active
-#
-# - id: TR-combat-003
-#   system: combat
-#   gdd: design/gdd/combat-system.md
-#   requirement: "Old damage formula using raw stats"
-#   created: 2026-03-10
-#   revised: ""
-#   status: "superseded-by: TR-combat-001"
+requirements:
+- id: TR-combat-event-bus-001
+  system: combat-event-bus
+  gdd: design/gdd/combat-event-bus.md
+  requirement: "4-Stage priority dispatch (100->200->300->400) with MAX_RECURSION_DEPTH = 2, MAX_PROCS_PER_FRAME = 32, and F3 64-entry trace ring buffer"
+  created: 2026-11-08
+  revised: ""
+  status: active
+- id: TR-player-3c-controller-001
+  system: player-3c-controller
+  gdd: design/gdd/player-3c-controller.md
+  requirement: "Sacrosanct 290.0 px/s base move speed, 0.42s committed dodge roll (0.28s I-frame + 42px Graze Ring yielding +10 Overcharge, max 2 base per roll), and customizable Proximity [E] / Ranged-Hit ArenaInteractableData"
+  created: 2026-11-08
+  revised: ""
+  status: active
+- id: TR-bullet-hell-damage-system-001
+  system: bullet-hell-damage-system
+  gdd: design/gdd/bullet-hell-damage-system.md
+  requirement: "800-slot zero-allocation BulletPool, One-Way Non-Blocking Hitstop (player delta unblocked), 3-Tier Ballistic Impact & Recoil (8/16/22px Heavy shooter slide), and 3-Pip Overcharge Aegis Shield vs SHIELD_PIERCING attacks"
+  created: 2026-11-08
+  revised: ""
+  status: active
+- id: TR-dual-gun-overcharge-engine-001
+  system: dual-gun-overcharge-engine
+  gdd: design/gdd/dual-gun-overcharge-engine.md
+  requirement: "Weapon-specific Active Reload sweet spots and 2.5s Signature Buffs, calibrated 72-100 Overcharge room yield vs 45/65/90 Heavy Spender costs (1-2 casts/room), and zero out-of-combat farming"
+  created: 2026-11-08
+  revised: ""
+  status: active
+- id: TR-loadout-and-items-system-001
+  system: loadout-and-items-system
+  gdd: design/gdd/loadout-and-items-system.md
+  requirement: "7-Slot Loadout Schema (3 Armory + 1 Active + 3 Passives), 80/20 Hybrid When->If->Do & custom_behavior_script items, and 4-Stage Commutative StatPipeline"
+  created: 2026-11-08
+  revised: ""
+  status: active
+- id: TR-enemy-and-boss-system-001
+  system: enemy-and-boss-system
+  gdd: design/gdd/enemy-and-boss-system.md
+  requirement: "3-Tier AI (Fodder tables with zero interrupt UI, Elite plugins, 4D Boss timelines with BossPartNode breaks), integer entity_uid handles, and Hitless Master Chamber Core"
+  created: 2026-11-08
+  revised: ""
+  status: active
+- id: TR-door-routing-and-floor-gen-001
+  system: door-routing-and-floor-gen
+  gdd: design/gdd/door-routing-and-floor-gen.md
+  requirement: "5 non-rectangular room footprints, 4 RoomObjectiveType modes with instant Overdrive Clear Pulse, 1-3 Hades-style distributed exits, and -25 Overdrive Bet"
+  created: 2026-11-08
+  revised: ""
+  status: active
+- id: TR-pit-stop-and-rival-system-001
+  system: pit-stop-and-rival-system
+  gdd: design/gdd/pit-stop-and-rival-system.md
+  requirement: "4-Tier Global Rarity (COMMON/RARE/EPIC/LEGENDARY), +1 HP heal cap, Randomized Black-Market with 60-Chip Mystery Box, 4-Axis Forge, and 3-Category NPC/Rival ecosystem"
+  created: 2026-11-08
+  revised: ""
+  status: active
+- id: TR-tactical-micro-hud-001
+  system: tactical-micro-hud
+  gdd: design/gdd/tactical-micro-hud.md
+  requirement: "64px Player-Proximate Micro-HUD, 3-Pip Aegis Shield reconstruction bar, 4-Mode Room Objective Tracker, and edge-clamped off-screen wayfinder arrows"
+  created: 2026-11-08
+  revised: ""
+  status: active
+- id: TR-combat-audio-juice-system-001
+  system: combat-audio-juice-system
+  gdd: design/gdd/combat-audio-juice-system.md
+  requirement: "4-Bus audio hierarchy with -4.0 dB Sidechain Ducking on critical cues, streak pitch-escalation ladders, and capped 18.0 px camera shake"
+  created: 2026-11-08
+  revised: ""
+  status: active
+- id: TR-meta-progression-and-save-001
+  system: meta-progression-and-save
+  gdd: design/gdd/meta-progression-and-save.md
+  requirement: "6-Stream coordinate-hashed DeterministicRNGService, ThemeSkinCatalog lore decoupling, 3-Phase DLC/MOD ContentRegistry, and atomic meta/checkpoint saves"
+  created: 2026-11-08
+  revised: ""
+  status: active

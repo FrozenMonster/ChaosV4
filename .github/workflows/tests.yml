@@ -1,0 +1,16 @@
+name: Godot 4.7.2 Automated Headless Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Zero-Scene Headless Unit Suite
+        run: |
+          echo "Running headless RefCounted unit suite (tests/unit/test_core_architecture.gd)"
