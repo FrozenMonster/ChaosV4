@@ -36,7 +36,7 @@ To support this loop without spaghetti coupling or frame spikes during 500-bulle
 | 4 | Dual-Gun, Active Reload & Overcharge Engine | Gameplay | MVP | Approved | design/gdd/dual-gun-overcharge-engine.md | Combat Event Bus & Data Schema (inferred), Player 3C, Dodge-Graze & Tactical Arena Interactables, Pooled Bullet-Hell & Damage System |
 | 5 | 7-Slot Loadout & Tactical Items System | Gameplay | MVP | Approved | design/gdd/loadout-and-items-system.md | Combat Event Bus & Data Schema (inferred), Dual-Gun, Active Reload & Overcharge Engine |
 | 6 | Enemy AI, Elite/Boss Interrupts & Boss System | Gameplay | MVP | Approved | design/gdd/enemy-and-boss-system.md | Combat Event Bus & Data Schema (inferred), Pooled Bullet-Hell & Damage System, Dual-Gun, Active Reload & Overcharge Engine |
-| 7 | 3-Door Routing, Overdrive Bet & Floor Generator | Progression | MVP | Not Started | design/gdd/door-routing-and-floor-gen.md | Dual-Gun, Active Reload & Overcharge Engine, 7-Slot Loadout & Tactical Items System, Enemy AI, Elite/Boss Interrupts & Boss System |
+| 7 | 3-Door Routing, Overdrive Bet & Floor Generator | Progression | MVP | Approved | design/gdd/door-routing-and-floor-gen.md | Dual-Gun, Active Reload & Overcharge Engine, 7-Slot Loadout & Tactical Items System, Enemy AI, Elite/Boss Interrupts & Boss System |
 | 8 | Pit-Stop, Bounty Chip Economy & Rival Cast System | Economy | Vertical Slice | Not Started | design/gdd/pit-stop-and-rival-system.md | 7-Slot Loadout & Tactical Items System, Enemy AI, Elite/Boss Interrupts & Boss System, 3-Door Routing, Overdrive Bet & Floor Generator |
 | 9 | Tactical Micro-HUD & Screen UI System (inferred) | UI | MVP | Not Started | design/gdd/tactical-micro-hud.md | Player 3C & Dodge-Graze Controller, Dual-Gun, Active Reload & Overcharge Engine, 7-Slot Loadout & Tactical Items System, 3-Door Routing, Overdrive Bet & Floor Generator |
 | 10 | Combat Audio & Procedural Juice System (inferred) | Audio | Vertical Slice | Not Started | design/gdd/combat-audio-juice-system.md | Combat Event Bus & Data Schema (inferred), Pooled Bullet-Hell & Damage System, Dual-Gun, Active Reload & Overcharge Engine |
@@ -138,10 +138,10 @@ To support this loop without spaghetti coupling or frame spikes during 500-bulle
 | Metric | Count |
 |--------|-------|
 | Total systems identified | 11 |
-| Design docs started | 6 |
-| Design docs reviewed | 6 |
-| Design docs approved | 6 |
-| MVP systems designed | 6/8 |
+| Design docs started | 7 |
+| Design docs reviewed | 7 |
+| Design docs approved | 7 |
+| MVP systems designed | 7/8 |
 | Vertical Slice systems designed | 0/2 |
 
 ---
