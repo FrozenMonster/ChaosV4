@@ -8,7 +8,7 @@
 
 ## Summary
 
-Governs the zero-backtrack node-graph floor generator across **diverse non-rectangular room silhouettes (Standard, L-Bend, Ring-Pit, Twin-Bridge, Irregular Cavern)** with **1 to 3 spatially distributed exit doors** drawn from the **3 Core Door Categories (Armory, Tactical Items, Random Event / Pit-Stop)**, pre-door **`[F]` Overdrive Betting (`-25.0⚡` for 2x Chips + 2-Choice Crates + Elite Hazards)**, and seamless progression from **Floors 1–3 (Bait Contract)** through **Stratum 10 (Sample Y Heart)** into the **Endless Overdrive Loop (`Floor 11 -> ∞`)**.
+Governs the zero-backtrack node-graph floor generator featuring **Hades-style natural exit framing across 5 non-rectangular room silhouettes**, **4 Differentiated Room Objective Modes (`EXTERMINATION`, `SABOTAGE_BEACONS`, `OVERDRIVE_SURVIVAL`, `CONDUIT_UPLOAD`)** with instant room-clear shockwave wipes, **1 to 3 spatially distributed exit doors** drawn from the **3 Core Door Categories (Armory, Tactical Items, Random Event / Pit-Stop)**, pre-door **`[F]` Overdrive Betting (`-25.0⚡`)**, and seamless progression from **Floors 1–3 (Bait Contract)** through **Stratum 10 (Sample Y Heart)** into the **Endless Overdrive Loop (`Floor 11 -> ∞`)**.
 
 > **Quick reference** — Layer: `Feature` · Priority: `MVP` · Key deps: `Dual-Gun, Active Reload & Overcharge Engine`, `7-Slot Loadout & Tactical Items System`, `Enemy AI, Elite/Boss Interrupts & Boss System`
 
@@ -42,8 +42,20 @@ Governs the zero-backtrack node-graph floor generator across **diverse non-recta
      - **1-Door Transition (`Single Exit`)**: Used on Node 3 (leading into the guaranteed mid-floor Pit-Stop) and Node 6 (leading into the Stratum Boss gate).
      - **2-Door Fork (`Dual Choice` — `65%` of combat nodes)**: Offers a clean binary choice (e.g., North wing **Armory Door** vs. East wing **Tactical Item Door**).
      - **3-Door Junction (`Triple Hub` — `35%` of combat nodes)**: Spawns in larger Hub/Ring rooms, offering **Armory**, **Tactical Item**, and **Random Event** exits across separate walls.
-   - **Off-Screen Exit Wayfinder**: Because doors in L-Bend or large Ring rooms may sit outside the current camera view when the last enemy dies, clearing a room activates edge-of-screen directional neon arrows (`↗ 【军械门】`, `⬅ 【事件门】`) pointing toward each active `DoorSocket`.
-2. **7-Node Stratum Pacing Curve (`~8–10 Minutes` per Stratum)**:
+   - **Off-Screen Exit Wayfinder & Hades-Style Chamber Clear Presentation**:
+     - Exit doors are naturally recessed into the perimeter architecture (North-West tunnel arch, East catwalk gate, etc. — just like *Hades* chamber exits). During active combat, doors are sealed by crimson laser barriers with dormant overhead holo-orbs.
+     - The exact millisecond the room's objective completes (`ROOM CLEARED`), a **0.15s Overdrive Clear Pulse** radiates across the arena—**instantly vaporizing all remaining fodder enemies and active enemy projectiles**—while the reward pod drops near the player and the 1–3 exit barriers unseal with floating *Hades*-style neon category crests (plus edge-of-screen directional wayfinder arrows if an exit lies around an L-bend corner).
+2. **4 Differentiated Room Objective Modes (`RoomObjectiveType` — Beyond Pure Extermination)**:
+   - Combat rooms are not limited to repetitive "kill every mob" waves. When a combat node initializes, it pairs its spatial footprint with one of **4 distinct Room Objective Modes**, ensuring speed builds, defensive graze builds, and single-target burst builds each have rooms where they shine:
+
+| Room Objective Mode (`RoomObjectiveType`) | Occurrence Weight | Win Condition & Instant-Clear Payoff | Best-Matched Room Footprints & Build Synergy |
+| :--- | :--- | :--- | :--- |
+| **1. `EXTERMINATION`**<br>*(常规歼灭战)* | `~45%` | Eliminate all 1–2 spawned enemy waves (`room_encounter_budget`). | **Standard Chamber / Irregular Cavern** — Rewards balanced AoE and Final Round burst. |
+| **2. `SABOTAGE_BEACONS`**<br>*(破坏分布信标房)* | `~25%` | **3 to 4 armoured Corporate Signal Beacons (`220 HP` each)** are distributed across distant corners/wings of the room while infinite suppressor mobs spawn.<br>💥 **Payoff**: Destroying the final Beacon triggers an immediate chain overload that **instantly obliterates all remaining enemies and bullets** in the room! | **L-Bend Corridor / Twin-Bridge Span / Ring-Pit** — Rewards high mobility (*Kinetic Boots*, Launchpads), long-range piercing (*Revolver Final Round*, *Railgun*), and detonating nearby Fuel Drums to speed-snipe Beacons without fighting fodder. |
+| **3. `OVERDRIVE_SURVIVAL`**<br>*(高压倒计时生存房)* | `~15%` | Corporate lockdown triggers a **`25.0s–30.0s` bullet-hell barrage** from wall emitters and aggressive waves.<br>💥 **Payoff**: Surviving until `timer == 0.0s` causes all enemies and turrets to self-destruct simultaneously, plus awards **`+1 🪙 Bounty Chip` per `5.0⚡` Overcharge** held at buzzer end! | **Central Ring-Pit / Standard Chamber** — Primary showcase for `Space` Dodge-Graze builds, *Aegis Shatter Dynamo*, `[Q]` *EMP Blank Pulse*, `[E]` *Deployable Shields*, and `90⚡` *Black Hole* bullet devouring. |
+| **4. `CONDUIT_UPLOAD`**<br>*(终端超载上传房)* | `~15%` | Activate 1–2 Data Terminals (`[E]`) and hold the zone until upload reaches **`100%`** (`+5%/sec` passive tick, plus **`+12%` instant upload burst** on every **Perfect Reload** or enemy kill inside the zone!). Reaching `100%` vaporizes all remaining foes. | **Twin-Bridge / Hub Cross** — Rewards close-quarters knockback (*Bailiff Pump-Shotgun*, *Kinetic Blast Wave* reload buff) and *Holo-Decoy* zone control. |
+
+3. **7-Node Stratum Pacing Curve (`~8–10 Minutes` per Stratum)**:
    - Each Stratum consists of a 7-step forward directed acyclic graph (DAG):
      - **Node 1 (Drop-Pod Entry Skirmish)**: Standard Chamber, medium-low enemy budget; forks into 2–3 exits.
      - **Nodes 2 & 3 (Build-Shaping Forks)**: L-Bend, Ring-Pit, or Twin-Bridge combat/event rooms; Node 3 funnels into Node 4.
@@ -77,8 +89,8 @@ Governs the zero-backtrack node-graph floor generator across **diverse non-recta
 
 | Room & Routing State | Condition | Allowed Transitions | Behavior |
 | :--- | :--- | :--- | :--- |
-| **`ROOM_COMBAT_ACTIVE`** | `room_cleared == false` (enemies or waves remaining) | $\rightarrow$ `ROOM_CLEARED_ROUTING` when all waves & enemies reach `0 HP` | Exit `DoorSocket` blast doors remain sealed; Overcharge generation is active (`72–100⚡` room budget). |
-| **`ROOM_CLEARED_ROUTING`** | All enemies defeated in current room | $\rightarrow$ `OVERDRIVE_BET_LOCKED` on `[F]` near a combat door (`>= 25⚡`)<br>$\rightarrow$ `ROOM_TRANSITIONING` on `[E]` at any unlocked door | Spawns room reward pedestal in arena center; unseals 1–3 distributed `DoorSocket` gates and turns on off-screen neon wayfinder arrows; disables out-of-combat Overcharge farming. |
+| **`ROOM_COMBAT_ACTIVE`** | `room_cleared == false` (objective in progress: waves remaining, Beacons `> 0`, Survival `timer > 0`, or Upload `< 100%`) | $\rightarrow$ `ROOM_CLEARED_ROUTING` the instant the active `RoomObjectiveType` completes | Exit `DoorSocket` gates remain sealed by laser barriers; Overcharge generation is active (`72–100⚡` room budget). |
+| **`ROOM_CLEARED_ROUTING`** | Room objective completed (`0.15s` Overdrive Clear Pulse vaporizes all remaining fodder & enemy bullets) | $\rightarrow$ `OVERDRIVE_BET_LOCKED` on `[F]` near a combat door (`>= 25⚡`)<br>$\rightarrow$ `ROOM_TRANSITIONING` on `[E]` at any unlocked door | Drops room reward pod; unseals 1–3 *Hades*-style recessed exits with floating neon crests and off-screen wayfinder arrows; disables out-of-combat Overcharge farming. |
 | **`OVERDRIVE_BET_LOCKED`** | Player pressed `[F]` (`-25.0⚡`) on a target door | $\rightarrow$ `ROOM_TRANSITIONING` on `[E]` | Hydraulic hazard clamps slam onto the chosen door frame; increments `stratum_bet_streak` (triggers Rival Boss *Vesper* at `streak >= 2`). |
 | **`ROOM_TRANSITIONING`** | Player pressed `[E]` at an active door | $\rightarrow$ `ROOM_COMBAT_ACTIVE` (or Pit-Stop `SAFE_SANCTUARY`) in next template | Loads next non-repeating room footprint template, applies Overdrive Bet modifiers if locked, and places player at entry spawn socket. |
 
@@ -192,7 +204,7 @@ Total **Bounty Chips (`🪙悬赏工分币`)** earned from clearing a combat roo
 - **GIVEN** a generated 7-Node Stratum, **WHEN** room templates are selected for Nodes 1–6, **THEN** no two consecutive rooms use the exact same room template ID, rooms utilize non-uniform footprints (Standard, L-Bend, Ring-Pit, Twin-Bridge, Cavern), and each room activates `1` to `3` spatially distributed `DoorSocket` exits.
 - **GIVEN** `room_cleared` transitions to `true` in an L-Bend or Ring-Pit room where an active `DoorSocket` lies outside the current camera viewport, **WHEN** the HUD updates, **THEN** an edge-clamped directional wayfinder badge points toward the off-screen door until it enters the viewport.
 - **GIVEN** the player has `>= 25.0⚡` Overcharge and presses `[F]` at an `ARMORY_DOOR` or `TACTICAL_ITEM_DOOR`, **WHEN** the player enters that door, **THEN** `25.0⚡` is deducted, the next room's `room_encounter_budget` increases by `+35%` with a hazard modifier, Bounty Chip drops are multiplied by `2.0x`, and clearing the room spawns a **2-Choice Reward Crate**.
-- **GIVEN** `room_encounter_budget` for a high-stratum room requires `12` total enemies, **WHEN** the room starts, **THEN** at most `MAX_CONCURRENT_ENEMIES` (`7`) spawn in Wave 1 and the remaining `5` spawn in Wave 2 with `0.8s` floor telegraphs once active enemies drop to `<= 2`.
+- **GIVEN** a room initializes with `RoomObjectiveType = SABOTAGE_BEACONS` (3 distributed Beacons) or `OVERDRIVE_SURVIVAL` (`28.0s` timer), **WHEN** the player destroys the 3rd Beacon or the survival timer reaches `0.0s` while 5 fodder enemies and 40 enemy bullets are still active on screen, **THEN** the Overdrive Clear Pulse immediately vaporizes all 5 enemies and all 40 bullets, transitions to `ROOM_CLEARED_ROUTING`, and unseals the distributed exits.
 
 ## Open Questions
 
