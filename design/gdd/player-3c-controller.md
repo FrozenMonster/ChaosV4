@@ -105,7 +105,7 @@ When an enemy bullet intersects the player's Graze Ring during a Dodge Roll, the
 **Variables:**
 | Variable | Type | Range | Source | Description |
 |----------|------|-------|--------|-------------|
-| `CHARGE_DODGE_GRAZE` | float | `20.0` | data file | Base Tier-1 Overcharge energy awarded per grazed enemy projectile |
+| `CHARGE_DODGE_GRAZE` | float | `10.0` | data file | Base Tier-1 Overcharge energy awarded per grazed enemy projectile (calibrated for `72–100⚡` room budget; max `+20.0⚡` per roll) |
 | `dodge_timer` | float | `0.0–0.42` | calculated | Elapsed time in the current dodge roll |
 | `bullet_already_grazed` | bool | `true/false` | calculated | Per-bullet flag ensuring one projectile cannot be grazed multiple times |
 | `roll_graze_count` | int | `0–2` | calculated | Number of bullets already grazed during the current `Space` roll |

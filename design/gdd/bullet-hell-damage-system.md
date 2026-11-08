@@ -123,14 +123,14 @@ To make Final Rounds and Heavy Weapons feel physically devastating, enemy knockb
 
 When the player fires a Final Round or `RMB` Heavy Spender, the backward physical slide applied to the player over `0.08s` is defined as:
 
-`shooter_recoil_slide_px = (RECOIL_FINAL_ROUND * int(is_final_round) + (RECOIL_HEAVY_LIGHT * int(heavy_cost == 30.0) + RECOIL_HEAVY_MED * int(heavy_cost == 50.0) + RECOIL_HEAVY_ULT * int(heavy_cost == 90.0)) * int(is_heavy_shot)) * int(not is_dodging)`
+`shooter_recoil_slide_px = (RECOIL_FINAL_ROUND * int(is_final_round) + (RECOIL_HEAVY_LIGHT * int(heavy_cost == 45.0) + RECOIL_HEAVY_MED * int(heavy_cost == 65.0) + RECOIL_HEAVY_ULT * int(heavy_cost == 90.0)) * int(is_heavy_shot)) * int(not is_dodging)`
 
 **Variables:**
 | Variable | Type | Range | Source | Description |
 |----------|------|-------|--------|-------------|
 | `RECOIL_FINAL_ROUND` | float | `4.0` | data file | Crisp backward snap (pixels) when firing a Primary Final Round |
-| `RECOIL_HEAVY_LIGHT` | float | `8.0` | data file | Backward slide (pixels) when firing a `30⚡` Light Heavy Weapon |
-| `RECOIL_HEAVY_MED` | float | `16.0` | data file | Backward slide (pixels) when firing a `50⚡` Medium Heavy Weapon (Railgun) |
+| `RECOIL_HEAVY_LIGHT` | float | `8.0` | data file | Backward slide (pixels) when firing a `45⚡` Light Heavy Weapon |
+| `RECOIL_HEAVY_MED` | float | `16.0` | data file | Backward slide (pixels) when firing a `65⚡` Medium Heavy Weapon (Railgun) |
 | `RECOIL_HEAVY_ULT` | float | `22.0` | data file | Backward slide (pixels) when firing a `90⚡` Ultimate Heavy Weapon (Black Hole) |
 | `is_dodging` | bool | `true/false` | calculated | Suppresses recoil slide if the player is currently mid-dodge roll |
 
