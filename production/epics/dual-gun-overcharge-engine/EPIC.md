@@ -4,7 +4,14 @@
 > **GDD**: design/gdd/dual-gun-overcharge-engine.md
 > **Architecture Module**: `src/combat/weapons/` & `src/content/weapons/`
 > **Status**: Ready
-> **Stories**: Not yet created — run `/create-stories dual-gun-overcharge-engine`
+> **Stories**: 2 stories
+
+## Stories
+
+| # | Story | Type | Status | ADR |
+|---|-------|------|--------|-----|
+| 001 | Calibrated 72–100⚡ Overcharge Ledger, Anti-Farming Gate & RMB Heavy Spenders | Logic | Ready | ADR-003, ADR-006 |
+| 002 | Self-Contained Primary Weapon Reload Profiles & Signature Buffs | Logic | Ready | ADR-003 |
 
 ## Overview
 

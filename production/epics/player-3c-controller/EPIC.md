@@ -4,7 +4,14 @@
 > **GDD**: design/gdd/player-3c-controller.md
 > **Architecture Module**: `src/combat/player_3c/` & `src/content/interactables/`
 > **Status**: Ready
-> **Stories**: Not yet created — run `/create-stories player-3c-controller`
+> **Stories**: 2 stories
+
+## Stories
+
+| # | Story | Type | Status | ADR |
+|---|-------|------|--------|-----|
+| 001 | Sacrosanct 3C Movement & Committed Space Dodge-Graze Logic Core | Logic | Ready | ADR-002, ADR-003 |
+| 002 | Customizable Proximity [E] & Ranged-Hit Tactical Arena Interactables | Logic | Ready | ADR-003 |
 
 ## Overview
 

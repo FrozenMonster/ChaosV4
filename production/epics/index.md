@@ -5,10 +5,10 @@ Engine: Godot 4.7.2
 
 | Epic | Layer | System | GDD | Stories | Status |
 |------|-------|--------|-----|---------|--------|
-| Combat Event Bus & Data Schema | Foundation | combat-event-bus | design/gdd/combat-event-bus.md | Not yet created | Ready |
-| Player 3C, Dodge-Graze & Tactical Arena Interactables | Foundation | player-3c-controller | design/gdd/player-3c-controller.md | Not yet created | Ready |
-| Pooled Bullet-Hell & Damage System | Core | bullet-hell-damage-system | design/gdd/bullet-hell-damage-system.md | Not yet created | Ready |
-| Dual-Gun, Active Reload & Overcharge Engine | Core | dual-gun-overcharge-engine | design/gdd/dual-gun-overcharge-engine.md | Not yet created | Ready |
+| Combat Event Bus & Data Schema | Foundation | combat-event-bus | design/gdd/combat-event-bus.md | 2 stories | Ready |
+| Player 3C, Dodge-Graze & Tactical Arena Interactables | Foundation | player-3c-controller | design/gdd/player-3c-controller.md | 2 stories | Ready |
+| Pooled Bullet-Hell & Damage System | Core | bullet-hell-damage-system | design/gdd/bullet-hell-damage-system.md | 2 stories | Ready |
+| Dual-Gun, Active Reload & Overcharge Engine | Core | dual-gun-overcharge-engine | design/gdd/dual-gun-overcharge-engine.md | 2 stories | Ready |
 | 7-Slot Loadout & Tactical Items System | Feature | loadout-and-items-system | design/gdd/loadout-and-items-system.md | Not yet created | Ready |
 | Enemy AI, Elite/Boss Interrupts & Boss System | Feature | enemy-and-boss-system | design/gdd/enemy-and-boss-system.md | Not yet created | Ready |
 | 3-Door Routing, Overdrive Bet & Floor Generator | Feature | door-routing-and-floor-gen | design/gdd/door-routing-and-floor-gen.md | Not yet created | Ready |

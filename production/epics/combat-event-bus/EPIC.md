@@ -4,7 +4,14 @@
 > **GDD**: design/gdd/combat-event-bus.md
 > **Architecture Module**: `src/core/event_bus/` & `src/core/schemas/`
 > **Status**: Ready
-> **Stories**: Not yet created — run `/create-stories combat-event-bus`
+> **Stories**: 2 stories
+
+## Stories
+
+| # | Story | Type | Status | ADR |
+|---|-------|------|--------|-----|
+| 001 | 4-Stage Priority Event Bus, Recursion Guard & F3 Trace Ring Buffer | Logic | Ready | ADR-001 |
+| 002 | 7-Slot Equipment, 4-Tier Rarity & ArenaInteractable Resource Schemas | Logic | Ready | ADR-001, ADR-006 |
 
 ## Overview
 

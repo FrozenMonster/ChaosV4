@@ -4,7 +4,14 @@
 > **GDD**: design/gdd/bullet-hell-damage-system.md
 > **Architecture Module**: `src/combat/bullet_pool/`
 > **Status**: Ready
-> **Stories**: Not yet created — run `/create-stories bullet-hell-damage-system`
+> **Stories**: 2 stories
+
+## Stories
+
+| # | Story | Type | Status | ADR |
+|---|-------|------|--------|-----|
+| 001 | 800-Slot Zero-Alloc BulletPool, Synergy Coalescing & Non-Blocking Hitstop | Logic | Ready | ADR-002, ADR-004 |
+| 002 | 3-Tier Ballistic Recoil/Knockback & 3-Pip Overcharge Aegis Shield | Logic | Ready | ADR-002, ADR-004 |
 
 ## Overview
 
