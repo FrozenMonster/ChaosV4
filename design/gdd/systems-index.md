@@ -34,7 +34,7 @@ To support this loop without spaghetti coupling or frame spikes during 500-bulle
 | 2 | Player 3C, Dodge-Graze & Tactical Arena Interactables | Core | MVP | Approved | design/gdd/player-3c-controller.md | — |
 | 3 | Pooled Bullet-Hell & Damage System | Core | MVP | Approved | design/gdd/bullet-hell-damage-system.md | Combat Event Bus & Data Schema (inferred), Player 3C, Dodge-Graze & Tactical Arena Interactables |
 | 4 | Dual-Gun, Active Reload & Overcharge Engine | Gameplay | MVP | Approved | design/gdd/dual-gun-overcharge-engine.md | Combat Event Bus & Data Schema (inferred), Player 3C, Dodge-Graze & Tactical Arena Interactables, Pooled Bullet-Hell & Damage System |
-| 5 | 7-Slot Loadout & Tactical Items System | Gameplay | MVP | Not Started | design/gdd/loadout-and-items-system.md | Combat Event Bus & Data Schema (inferred), Dual-Gun, Active Reload & Overcharge Engine |
+| 5 | 7-Slot Loadout & Tactical Items System | Gameplay | MVP | Approved | design/gdd/loadout-and-items-system.md | Combat Event Bus & Data Schema (inferred), Dual-Gun, Active Reload & Overcharge Engine |
 | 6 | Enemy AI, Interrupt Telegraphs & Boss System | Gameplay | MVP | Not Started | design/gdd/enemy-and-boss-system.md | Combat Event Bus & Data Schema (inferred), Pooled Bullet-Hell & Damage System, Dual-Gun, Active Reload & Overcharge Engine |
 | 7 | 3-Door Routing, Overdrive Bet & Floor Generator | Progression | MVP | Not Started | design/gdd/door-routing-and-floor-gen.md | Dual-Gun, Active Reload & Overcharge Engine, 7-Slot Loadout & Tactical Items System, Enemy AI, Interrupt Telegraphs & Boss System |
 | 8 | Pit-Stop, Scrap Economy & Rival Cast System | Economy | Vertical Slice | Not Started | design/gdd/pit-stop-and-rival-system.md | 7-Slot Loadout & Tactical Items System, Enemy AI, Interrupt Telegraphs & Boss System, 3-Door Routing, Overdrive Bet & Floor Generator |
@@ -138,10 +138,10 @@ To support this loop without spaghetti coupling or frame spikes during 500-bulle
 | Metric | Count |
 |--------|-------|
 | Total systems identified | 11 |
-| Design docs started | 4 |
-| Design docs reviewed | 4 |
-| Design docs approved | 4 |
-| MVP systems designed | 4/8 |
+| Design docs started | 5 |
+| Design docs reviewed | 5 |
+| Design docs approved | 5 |
+| MVP systems designed | 5/8 |
 | Vertical Slice systems designed | 0/2 |
 
 ---
